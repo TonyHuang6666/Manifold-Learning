@@ -1,2 +1,14 @@
 .idea/
 images/
+
+# Jupyter Notebook output
+*.ipynb_checkpoints/
+*.ipynb-meta
+*.nbconvert/
+*.html
+*.pdf
+
+# Jupyter Notebook images
+*.png
+*.jpg
+*.gif
