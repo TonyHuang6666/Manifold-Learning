@@ -1,4 +1,3 @@
-
 import numpy as np
 from scipy.linalg import eigh
 import matplotlib.pyplot as plt  # 导入Matplotlib库
@@ -85,6 +84,20 @@ lpp_embeddings = LPP(Data_T, n_neighbors=n_neighbors, n_components=n_components,
 # 绘制投影图
 plt.figure(figsize=(14,10))
 plt.scatter(lpp_embeddings[:, 0], lpp_embeddings[:, 1], c=plt.cm.jet((Data_T[:,0]**2 + Data_T[:,2]**2)/100), s=200, lw=0, alpha=1)
+plt.title('LPP with k-Nearest Neighbors = ' + str(n_neighbors), size=25)
+plt.axis("off")
+
+from lpproj import LocalityPreservingProjection
+#创建 LPP 模型
+lpp = LocalityPreservingProjection(n_neighbors=n_neighbors, n_components= n_components)
+# 使用 LPP 模型拟合瑞士卷数据集
+lpp.fit(Data_T)
+# 将数据集进行降维处理
+y = lpp.transform(Data_T)
+
+# 绘制投影图
+plt.figure(figsize=(14,10))
+plt.scatter(y[:, 0], y[:, 1], c=plt.cm.jet((Data_T[:,0]**2+Data_T[:,2]**2)/100), s=200, lw=0, alpha=1)
 plt.title('LPP with k-Nearest Neighbors = ' + str(n_neighbors), size=25)
 plt.axis("off")
 plt.show()
