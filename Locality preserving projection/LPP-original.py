@@ -65,7 +65,7 @@ ax.scatter(Data[0, :], Data[1, :], Data[2, :], c=plt.cm.jet((Data[0, :]**2 + Dat
 ax.set_xlim(np.min(Data[0, :]), np.max(Data[0, :]))
 ax.set_ylim(np.min(Data[1, :]), np.max(Data[1, :]))
 ax.set_zlim(np.min(Data[2, :]), np.max(Data[2, :]))
-plt.title('swiss roll - '+ str(Data.shape[1]) + ' points', size=30)
+plt.title('Data - '+ str(Data.shape[1]) + ' points', size=30)
 ax.axis("off")
 
 # 将 Data 转置

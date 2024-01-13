@@ -82,18 +82,31 @@ ax.scatter(Data[0, :], Data[1, :], Data[2, :], c=plt.cm.jet((Data[0, :]**2 + Dat
 ax.set_xlim(np.min(Data[0, :]), np.max(Data[0, :]))
 ax.set_ylim(np.min(Data[1, :]), np.max(Data[1, :]))
 ax.set_zlim(np.min(Data[2, :]), np.max(Data[2, :]))
-plt.title('swiss roll - '+ str(Data.shape[1]) + ' points', size=30)
+plt.title('Data - '+ str(Data.shape[1]) + ' points', size=30)
 ax.axis("off")
 
+n_components=2
 n_neighbors=70
 
+# 使用 sklearn 库中的 LocallyLinearEmbedding 函数降维
+from sklearn.manifold import LocallyLinearEmbedding
+# 创建 LocallyLinearEmbedding 实例
+lle = LocallyLinearEmbedding(n_components=n_components, n_neighbors=n_neighbors) 
+# 对数据集进行降维处理
+X_reduced = lle.fit_transform(Data_T)
+# 绘制 Isomap 投影图
+plt.figure(figsize=(14,10))
+plt.scatter(X_reduced[:, 0], X_reduced[:, 1], c=plt.cm.jet((Data_T[:,0]**2+Data_T[:,2]**2)/100), s=200, lw=0, alpha=1)
+plt.title('Output by sklearn-LLE  neighbors = ' + str(n_neighbors), size=30)
+plt.axis("off")
+
 # 使用 LLE 算法降维
-LLE_X = LLE(Data_T, n_neighbors=n_neighbors, n_components=2)  # 使用 LLE 算法降维，将数据维度从 3D 减少到 2D
+LLE_X = LLE(Data_T, n_neighbors=n_neighbors, n_components=n_components)  # 使用 LLE 算法降维，将数据维度从 3D 减少到 2D
 
 # 绘制 LLE 投影图
 plt.figure(figsize=(14,10))
 plt.scatter(LLE_X[:, 0].tolist(), LLE_X[:, 1].tolist(), c=plt.cm.jet((Data_T[:,0]**2+Data_T[:,2]**2)/100), s=200, lw=0, alpha=1)
-plt.title('swiss roll-LLE neighbors = ' + str(n_neighbors), size=30)
+plt.title('Output by LLE   neighbors = ' + str(n_neighbors), size=30)
 plt.axis("off")
 
 plt.show()
