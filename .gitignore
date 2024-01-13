@@ -1,5 +1,8 @@
 .idea/
 images/
+*.css
+*.csv
+*.npy
 
 # Jupyter Notebook output
 *.ipynb_checkpoints/
