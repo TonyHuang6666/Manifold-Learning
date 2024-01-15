@@ -7,23 +7,50 @@ def pairwise_distances(X):
     dist_matrix = np.sqrt(np.sum((X[:, None] - X) ** 2, axis=2))
     return dist_matrix
 
-# 计算最近邻的索引
+# 计算邻接矩阵的函数（kNN）
 def nearest_neighbors(X, n_neighbors):
     dist_matrix = pairwise_distances(X)
-    return dist_matrix.argsort(axis=1)[:, 1:n_neighbors+1]
+    adjacency_matrix = dist_matrix.argsort(axis=1)[:, 1:n_neighbors+1]
+    return adjacency_matrix
+
+# 构建epsilon邻域的邻接图
+def epsilon_neighborhood(X, epsilon):
+    n_samples = X.shape[0]
+    # 初始化邻接矩阵
+    adjacency_matrix = np.zeros((n_samples, n_samples), dtype=int)
+    # 遍历所有节点对
+    for i in range(n_samples):
+        for j in range(i + 1, n_samples):
+            # 计算节点 i 和节点 j 之间的欧几里得距离
+            distance = np.linalg.norm(X[i] - X[j])
+            # 如果距离小于阈值epsilon，则连接节点 i 和节点 j
+            if distance <= epsilon:
+                adjacency_matrix[i, j] = 1
+                adjacency_matrix[j, i] = 1
+            elif distance > epsilon:
+                adjacency_matrix[i, j] = 0
+                adjacency_matrix[j, i] = 0
+    return adjacency_matrix
 
 def construct_weight_matrix(X, n_neighbors, method, epsilon, t):
     n = len(X)  # 计算数据集样本点的数量
-    Weight_matrix = np.zeros((n, n))  # 创建一个全零的邻接矩阵，尺寸为 (n, n)
+    Weight_matrix = np.zeros((n, n))  # 创建一个全零的权重矩阵，尺寸为 (n, n)
     if method == 'epsilon':  # 如果方法为epsilon邻域
+        adjacency_matrix = epsilon_neighborhood(X, epsilon)
         for i in range(n):  # 对于数据集中的每个样本点 i
             for j in range(n):  # 对于数据集中的每个样本点 j
-                if np.linalg.norm(X[i] - X[j]) < epsilon:  # 如果样本点 i 和 j 之间的距离小于 epsilon
+                if adjacency_matrix[i, j] == 1:
                     Weight_matrix[i, j] = np.exp(- np.linalg.norm(X[i] - X[j]) ** 2 / t)  # 使用热核方法计算权重
-                    Weight_matrix[j, i] = np.exp(- np.linalg.norm(X[j] - X[i]) ** 2 / t)  #邻接矩阵为对称矩阵
+                    Weight_matrix[j, i] = np.exp(- np.linalg.norm(X[j] - X[i]) ** 2 / t)  #权重矩阵为对称矩阵
+                elif adjacency_matrix[i, j] == 0:
+                    Weight_matrix[i, j] = 0
+                    Weight_matrix[j, i] = 0
+        np.savetxt('e-Weight_matrix.csv', Weight_matrix, delimiter=',')
     elif method == 'knn':  # 如果方法为k最近邻
         dist_matrix = pairwise_distances(X)  # 计算数据集中样本点之间的距离
+        np.savetxt('dist_matrix.csv', dist_matrix, delimiter=',')
         knn_matrix = nearest_neighbors(X, n_neighbors)  # 计算每个样本点的 n_neighbors 个最近邻索引
+        np.savetxt('knn_matrix.csv', knn_matrix, delimiter=',')
         for i in range(len(X)):  # 对于数据集中的每个样本点 i
             for j in knn_matrix[i]:  # 对于样本点 i 的 n_neighbors 个最近邻点 j
                 Weight_matrix[i][int(j)] = np.exp(- dist_matrix[i][int(j)] ** 2 / t)  # 使用热核方法计算权重
@@ -82,10 +109,19 @@ t=60 # 设置热核参数
 lpp_embeddings = LPP(Data_T, n_neighbors=n_neighbors, n_components=n_components, method=method, epsilon=epsilon, t=t)
 
 # 绘制投影图
+import os
 plt.figure(figsize=(14,10))
-plt.scatter(lpp_embeddings[:, 0], lpp_embeddings[:, 1], c=plt.cm.jet((Data_T[:,0]**2 + Data_T[:,2]**2)/100), s=200, lw=0, alpha=1)
-plt.title('LPP with k-Nearest Neighbors = ' + str(n_neighbors), size=25)
+plt.scatter(lpp_embeddings[:, 0], lpp_embeddings[:, 1], c=plt.cm.jet((Data_T[:,0]**2+Data_T[:,2]**2)/100), s=200, lw=0, alpha=1)
+if method == 'knn':
+    plt.title('LPP with k-Nearest Neighbors = ' + str(n_neighbors) + ' and t = ' + str(t), size=25)
+    file_name = 'LPP_knn_' + str(n_neighbors) + '_t_' + str(t) + '.png'
+elif method == 'epsilon':
+    plt.title('LPP with epsilon = ' + str(epsilon) + ' and t = ' + str(t), size=25)
+    file_name = 'LPP_epsilon_' + str(epsilon) + '_t_' + str(t) + '.png'
+file_path = os.path.join('.', 'output', file_name)
+plt.savefig(file_path)
 plt.axis("off")
+plt.show()
 
 from lpproj import LocalityPreservingProjection
 #创建 LPP 模型
