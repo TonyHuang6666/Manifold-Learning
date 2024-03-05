@@ -62,7 +62,7 @@ class LocalityPreservingProjection(BaseEstimator, TransformerMixin):
             W.data = np.exp(-W.data ** 2 / self.weight_width ** 2)  # 计算热核函数的值
         else:
             raise ValueError("Unrecognized Weight")  # 抛出错误，未识别的权重类型
-
+        #保存权重矩阵为csv文件
         # 对称化矩阵
         # TODO: 使此更有效并保持稀疏输出
         W = W.toarray()  # 将稀疏矩阵转换为稠密矩阵
