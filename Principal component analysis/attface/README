@@ -1,0 +1,27 @@
+奥利维蒂研究实验室人脸数据库
+该目录包含了在1992年4月至1994年4月期间在英国剑桥的奥利维蒂研究实验室拍摄的一组人脸图像。
+
+共有40个不同主题的10张不同图像。对于一些主题，图像是在不同的时间拍摄的，光照略有变化，面部表情（睁/闭眼睛，微笑/不微笑）和面部细节（戴眼镜/不戴眼镜）也不同。所有图像都是在深色均匀的背景下拍摄的，主题是在直立的、正面的位置（对于一些侧向移动有一定的容忍度）。
+
+文件采用PGM格式，可以方便地使用'xv'程序查看。每个图像的大小为92x112，8位灰度级。图像以40个目录（每个主题一个）组织，命名为：
+
+		sX
+
+其中X表示主题编号（从1到40）。在每个目录中，有10张选定主题的不同图像，命名为：
+
+		Y.pgm
+
+where Y indicates which image for the specific subject (between 1 and 10).
+
+其中Y表示特定主题的图像（从1到10）。
+
+在使用这些图像时，请给予奥利维蒂研究实验室相应的荣誉。一个方便的参考是使用了其中一些图像的人脸识别工作：
+
+F. Samaria and A. Harter
+"Parameterisation of a stochastic model for human face identification"
+2nd IEEE Workshop on Applications of Computer Vision
+1994年12月，佛罗里达州萨拉索塔举办
+
+该论文可通过匿名ftp从quince.cam-orl.co.uk获取，存储在pub/users/fs/IEEE_workshop.ps.Z中。
+
+如果您有任何问题，请发送电子邮件至Ferdinando Samaria: fs@cam-orl.co.uk
