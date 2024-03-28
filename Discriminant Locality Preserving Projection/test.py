@@ -10,7 +10,7 @@ class DLPPWindow(QMainWindow):
     def __init__(self):
         super().__init__()
 
-        self.setWindowTitle("DLPP与LPP程序图形界面")
+        self.setWindowTitle("DLPP LPP LDA 人脸特征提取与识别程序")
         self.setGeometry(200, 100, 1200, 1000)
 
         self.central_widget = QWidget()
@@ -23,7 +23,7 @@ class DLPPWindow(QMainWindow):
         self.dataset_label = QLabel("选择数据集文件夹:")
         self.main_layout.addWidget(self.dataset_label)
         self.default_dataset_path = "D:\OneDrive - email.szu.edu.cn\Manifold Learning\Discriminant Locality Preserving Projection\ORL"
-        self.dataset_path_label = QLabel(f"ORL数据集路径: {self.default_dataset_path}")  # 显示默认数据集文件夹的路径
+        self.dataset_path_label = QLabel(f"数据集默认路径: {self.default_dataset_path}")  # 显示默认数据集文件夹的路径
         self.main_layout.addWidget(self.dataset_path_label)
         self.dataset_button = QPushButton("选择其他数据集")
         self.dataset_button.clicked.connect(self.select_dataset)

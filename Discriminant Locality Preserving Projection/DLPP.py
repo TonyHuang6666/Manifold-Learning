@@ -150,7 +150,7 @@ def MLDA(train_data, train_labels, faceshape, d):
     eigen_values, eigen_vectors = scipy.linalg.eigh(W_value, eigvals=((faceshape[0] * faceshape[1]-d),(faceshape[0] * faceshape[1]-1)))  # 计算特征值和特征向量
     return eigen_vectors, overall_mean, classes_means, Z, Sb, Sw, W_value
 
-def Class_LPP(train_data, train_labels, method, d, k, t):
+def DLPP_LPP(train_data, train_labels, method, d, k, t):
     Data = train_data.T
     n = len(train_labels)
     Weight_matrices = np.zeros((n, n)) # 存储每个类别的权重矩阵
@@ -177,7 +177,7 @@ def DLPP(train_data, train_labels, d, lpp_method, k, t):
     # Step 1: 使用MLDA进行特征提取
     F = DLPP_MLDA(train_data, train_labels, d)
     # Step 2: 使用LPP进行特征提取
-    L, X = Class_LPP(train_data, train_labels, lpp_method, d, k, t)
+    L, X = DLPP_LPP(train_data, train_labels, lpp_method, d, k, t)
     # Step 3: 计算权重矩阵B
     num_classes = len(np.unique(train_labels))  # 计算训练集中的类别数
     B = np.zeros((num_classes, num_classes))  # 初始化权重矩阵B
