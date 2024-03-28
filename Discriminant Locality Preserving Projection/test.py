@@ -1,17 +1,17 @@
 import sys
 import time
+import numpy as np
 import matplotlib.pyplot as plt
 from PyQt5.QtWidgets import QApplication, QMainWindow, QLabel, QVBoxLayout, QWidget, QPushButton, QFileDialog, QLineEdit, QComboBox, QTextEdit
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from DLPP import *
-
 
 class DLPPWindow(QMainWindow):
     def __init__(self):
         super().__init__()
 
         self.setWindowTitle("DLPP程序图形界面")
-        self.setGeometry(100, 100, 1800, 1000)
+        self.setGeometry(100, 100, 800, 600)
 
         self.central_widget = QWidget()
         self.setCentralWidget(self.central_widget)
@@ -30,6 +30,18 @@ class DLPPWindow(QMainWindow):
         self.dataset_button = QPushButton("选择其他数据集")
         self.dataset_button.clicked.connect(self.select_dataset)
         self.main_layout.addWidget(self.dataset_button)
+
+        self.target_size_label = QLabel("选择图像缩放尺寸:")
+        self.main_layout.addWidget(self.target_size_label)
+        self.target_size_combo = QComboBox()
+        self.target_size_combo.addItem("8x8")
+        self.target_size_combo.addItem("16x16")
+        self.target_size_combo.addItem("32x32")
+        self.target_size_combo.addItem("64x64")
+        self.target_size_combo.addItem("128x128")
+        self.target_size_combo.addItem("原尺寸")
+        self.target_size_combo.setCurrentText("32x32")  # 设置初始值为32x32
+        self.main_layout.addWidget(self.target_size_combo)
 
         self.d_label = QLabel("请输入d:")
         self.main_layout.addWidget(self.d_label)
@@ -65,7 +77,7 @@ class DLPPWindow(QMainWindow):
         self.train_test_split_combo.setCurrentText("0.50")  # 设置初始值为当前选择
         self.main_layout.addWidget(self.train_test_split_combo)
 
-        self.info_label = QLabel("矩阵形状信息:")
+        self.info_label = QLabel("DLPP程序信息将在这里显示")
         self.main_layout.addWidget(self.info_label)
 
         self.info_textedit = QTextEdit()  # 用于显示DLPP函数信息的文本编辑框
@@ -97,10 +109,16 @@ class DLPPWindow(QMainWindow):
         lpp_method = self.lpp_combo.currentText()
         train_test_split_ratio = float(self.train_test_split_combo.currentText())
 
+        target_size_str = self.target_size_combo.currentText()
+        if target_size_str == "原尺寸":
+            target_size = None
+        else:
+            target_size = tuple(map(int, target_size_str.split("x")))
+
         start_time = time.time()  # 记录开始时间
 
         # 调用 DLPP.py 文件中的相关函数，并获取其输出信息
-        data, labels, faceshape = read_images(self.dataset_path)
+        data, labels, faceshape = read_images(self.dataset_path, target_size=target_size)
         train_data, train_labels, test_data, test_labels = train_test_split(data, labels, train_test_split_ratio=train_test_split_ratio)
         overall_mean = np.mean(train_data, axis=0).reshape(-1, 1) # 计算训练集的整体均值脸
         # 调用 DLPP 函数并接收返回的中间变量信息
@@ -108,6 +126,7 @@ class DLPPWindow(QMainWindow):
         dlpp_weight_matrix = np.dot(dlpp_eigenfaces.T, train_data.T- overall_mean)
 
         # 将信息显示在文本编辑框中
+        self.info_textedit.clear()
         self.show_info("训练数据集形状:", train_data.T.shape)
         self.show_info("整体均值脸形状:", overall_mean.shape)
         self.show_info("类平均脸形状:", F.shape)
@@ -115,7 +134,7 @@ class DLPPWindow(QMainWindow):
         self.show_info("类权重矩阵形状:", B.shape)
         self.show_info("目标函数形状:", objective_value.shape)
         self.show_info("特征脸形状:", dlpp_eigenfaces.shape)
-        self.show_info("权重矩阵形状:", dlpp_weight_matrix.T.shape)
+        self.show_info("权重矩阵形状:", dlpp_weight_matrix.shape)
     
         # 识别率统计
         wrong_times = 0

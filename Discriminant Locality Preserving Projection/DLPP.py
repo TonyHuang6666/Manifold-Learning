@@ -151,7 +151,7 @@ def DLPP(train_data, train_labels, d, lpp_method, k, t):
 
 
 # 读取数据集
-def read_images(dataset_dir, target_size=(32, 32)):
+def read_images(dataset_dir, target_size=None):
     data = []  # 存储图像数据的列表
     labels = []  # 存储标签的列表
     faceshape = [] # 存储图像形状
@@ -160,13 +160,16 @@ def read_images(dataset_dir, target_size=(32, 32)):
         for file_name in os.listdir(class_path):  # 遍历每个类别文件夹中的图像文件
             file_path = os.path.join(class_path, file_name)  # 图像文件路径
             img = cv2.imread(file_path, cv2.IMREAD_GRAYSCALE)  # 读取灰度图像
-            # 缩放图像至目标尺寸
-            img = cv2.resize(img, target_size, interpolation=cv2.INTER_AREA)
+            # 如果指定了目标尺寸，则缩放图像
+            if target_size is not None:
+                img = cv2.resize(img, target_size, interpolation=cv2.INTER_AREA)
             # 读取第一张灰度图像的大小作为图片形状
-            faceshape = img.shape
+            if not faceshape:
+                faceshape = img.shape
             data.append(img.flatten())  # 将图像展平并添加到数据列表中
             labels.append(int(class_dir))  # 将类别标签添加到标签列表中
     return np.array(data), np.array(labels).reshape(-1, 1), faceshape  # 返回图像数据和标签
+
 
 
 # 训练集和测试集划分
