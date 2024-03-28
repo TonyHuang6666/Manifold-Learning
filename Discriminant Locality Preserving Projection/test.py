@@ -2,7 +2,7 @@ import sys
 import time
 import numpy as np
 import matplotlib.pyplot as plt
-from PyQt5.QtWidgets import QApplication, QMainWindow, QLabel, QVBoxLayout, QWidget, QPushButton, QFileDialog, QLineEdit, QComboBox, QTextEdit
+from PyQt5.QtWidgets import QApplication, QMainWindow, QLabel, QVBoxLayout, QWidget, QPushButton, QFileDialog, QLineEdit, QComboBox, QTextEdit, QMessageBox
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from DLPP import *
 
@@ -10,7 +10,7 @@ class DLPPWindow(QMainWindow):
     def __init__(self):
         super().__init__()
 
-        self.setWindowTitle("DLPP程序图形界面")
+        self.setWindowTitle("DLPP与LPP程序图形界面")
         self.setGeometry(200, 100, 1200, 1000)
 
         self.central_widget = QWidget()
@@ -55,12 +55,21 @@ class DLPPWindow(QMainWindow):
         self.t_input.setText("60000")  # 默认值为60000
         self.main_layout.addWidget(self.t_input)
 
-        self.lpp_label = QLabel("请选择lpp_method:")
-        self.main_layout.addWidget(self.lpp_label)
-        self.lpp_combo = QComboBox()
-        self.lpp_combo.addItem("knn")
-        self.lpp_combo.addItem("epsilon")
-        self.main_layout.addWidget(self.lpp_combo)
+        self.method_label = QLabel("选择方法:")
+        self.main_layout.addWidget(self.method_label)
+        self.method_combo = QComboBox()
+        self.method_combo.addItem("DLPP")
+        self.method_combo.addItem("LPP")
+        self.method_combo.addItem("MLDA")
+        self.method_combo.currentIndexChanged.connect(self.toggle_parameters_visibility)  # 连接方法选择框的信号与槽函数
+        self.main_layout.addWidget(self.method_combo)
+
+        self.lpp_method_label = QLabel("请选择LPP方法:")
+        self.main_layout.addWidget(self.lpp_method_label)
+        self.lpp_method_combo = QComboBox()
+        self.lpp_method_combo.addItem("knn")
+        self.lpp_method_combo.addItem("epsilon")
+        self.main_layout.addWidget(self.lpp_method_combo)
 
         self.train_test_split_label = QLabel("请选择训练集/测试集划分比例:")
         self.main_layout.addWidget(self.train_test_split_label)
@@ -71,18 +80,18 @@ class DLPPWindow(QMainWindow):
         self.train_test_split_combo.setCurrentText("0.50")  # 设置初始值为当前选择
         self.main_layout.addWidget(self.train_test_split_combo)
 
-        self.info_label = QLabel("DLPP程序信息将在这里显示")
+        self.info_label = QLabel("程序信息将在这里显示")
         self.main_layout.addWidget(self.info_label)
 
-        self.info_textedit = QTextEdit()  # 用于显示DLPP函数信息的文本编辑框
+        self.info_textedit = QTextEdit()  # 用于显示函数信息的文本编辑框
         self.info_textedit.setReadOnly(True)  # 设置为只读模式
         self.main_layout.addWidget(self.info_textedit)
 
         self.canvas = FigureCanvas(plt.figure())
         self.main_layout.addWidget(self.canvas)
 
-        self.execute_button = QPushButton("执行DLPP程序")
-        self.execute_button.clicked.connect(self.execute_DLPP)
+        self.execute_button = QPushButton("执行程序")
+        self.execute_button.clicked.connect(self.execute_algorithm)
         self.main_layout.addWidget(self.execute_button)
 
         # 初始化数据集路径变量
@@ -95,61 +104,117 @@ class DLPPWindow(QMainWindow):
         if self.dataset_path:
             self.dataset_path_label.setText(f"数据集路径: {self.dataset_path}")
 
-    def execute_DLPP(self):
-        # 获取用户输入的参数值
-        d = int(self.d_input.text())
-        k = int(self.k_input.text())
-        t = int(self.t_input.text())
-        lpp_method = self.lpp_combo.currentText()
-        train_test_split_ratio = float(self.train_test_split_combo.currentText())
+    def execute_algorithm(self):
+        try:
+            # 获取用户输入的参数值
+            d = int(self.d_input.text())
+            k = int(self.k_input.text())
+            t = int(self.t_input.text())
+            method = self.method_combo.currentText()
+            lpp_method = self.lpp_method_combo.currentText()
+            train_test_split_ratio = float(self.train_test_split_combo.currentText())
 
-        target_size_str = self.target_size_combo.currentText()
-        if target_size_str == "100%":
-            target_size = None
-        else:
-            percentage = int(target_size_str[:-1]) / 100.0
-            target_size = (int(112 * percentage), int(92 * percentage))  # 原始尺寸112x92像素
-
-        start_time = time.time()  # 记录开始时间
-
-        # 调用 DLPP.py 文件中的相关函数，并获取其输出信息
-        data, labels, faceshape = read_images(self.dataset_path, target_size=target_size)
-        train_data, train_labels, test_data, test_labels = train_test_split(data, labels, train_test_split_ratio=train_test_split_ratio)
-        overall_mean = np.mean(train_data, axis=0).reshape(-1, 1) # 计算训练集的整体均值脸
-        # 调用 DLPP 函数并接收返回的中间变量信息
-        F, L, B, objective_value, dlpp_eigenfaces = DLPP(train_data, train_labels, d, lpp_method, k, t)
-        dlpp_weight_matrix = np.dot(dlpp_eigenfaces.T, train_data.T- overall_mean)
-
-        # 将信息显示在文本编辑框中
-        self.info_textedit.clear()
-        self.show_info("训练数据集形状:", train_data.T.shape)
-        self.show_info("整体均值脸形状:", overall_mean.shape)
-        self.show_info("类平均脸形状:", F.shape)
-        self.show_info("拉普拉斯矩阵形状:", L.shape)
-        self.show_info("类权重矩阵形状:", B.shape)
-        self.show_info("目标函数形状:", objective_value.shape)
-        self.show_info("特征脸形状:", dlpp_eigenfaces.shape)
-        self.show_info("权重矩阵形状:", dlpp_weight_matrix.shape)
-    
-        # 识别率统计
-        wrong_times = 0
-        right_times = 0
-        for i in range(test_data.shape[0]):
-            flag = test_image(i, faceshape, overall_mean, train_labels, train_data, test_labels, test_data[i], dlpp_eigenfaces, dlpp_weight_matrix)
-            if flag:
-                right_times += 1
+            target_size_str = self.target_size_combo.currentText()
+            if target_size_str == "100%":
+                target_size = None
             else:
-                wrong_times += 1
-        rate = right_times / (right_times + wrong_times)
+                percentage = int(target_size_str[:-1]) / 100.0
+                target_size = (int(112 * percentage), int(92 * percentage))  # 原始尺寸112x92像素
 
-        end_time = time.time()  # 记录结束时间
-        execution_time = end_time - start_time  # 计算执行时间
+            start_time = time.time()  # 记录开始时间
 
-        # 更新信息显示
-        self.info_label.setText(f"Recognition Rate: {rate}\nExecution Time: {execution_time:.2f} seconds")
+            data, labels, faceshape = read_images(self.dataset_path, target_size=target_size)
+            train_data, train_labels, test_data, test_labels = train_test_split(data, labels, train_test_split_ratio=train_test_split_ratio)
+            if method == "DLPP":
+                # 调用 DLPP.py 文件中的相关函数，并获取其输出信息
+                overall_mean = np.mean(train_data, axis=0).reshape(-1, 1) # 计算训练集的整体均值脸
+                # 调用 DLPP 函数并接收返回的中间变量信息
+                F, L, B, objective_value, eigenfaces = DLPP(train_data, train_labels, d, lpp_method, k, t)
+                weight_matrix = np.dot(eigenfaces.T, train_data.T- overall_mean)
 
-        # 显示特征脸图像
-        self.show_eigenfaces(dlpp_eigenfaces, faceshape)
+                # 将信息显示在文本编辑框中
+                self.info_textedit.clear()
+                self.show_info("训练数据集形状:", train_data.T.shape)
+                self.show_info("整体均值脸形状:", overall_mean.shape)
+                self.show_info("类平均脸形状:", F.shape)
+                self.show_info("拉普拉斯矩阵形状:", L.shape)
+                self.show_info("类权重矩阵形状:", B.shape)
+                self.show_info("目标函数形状:", objective_value.shape)
+                self.show_info("特征脸形状:", eigenfaces.shape)
+                self.show_info("权重矩阵形状:", weight_matrix.shape)
+                # 识别率统计
+                wrong_times = 0
+                right_times = 0
+                for i in range(test_data.shape[0]):
+                    flag = test_image(i, faceshape, overall_mean, train_labels, train_data, test_labels, test_data[i], eigenfaces, weight_matrix)
+                    if flag:
+                        right_times += 1
+                    else:
+                        wrong_times += 1
+                rate = right_times / (right_times + wrong_times)
+
+            elif method == "LPP":
+                # 调用 LPP 函数并接收返回的中间变量信息
+                train_data = train_data.T
+                eigenfaces = LPP(train_data, d, lpp_method, k, t)
+                overall_mean = np.mean(train_data , axis=1).reshape(-1, 1)
+                weight_matrix = eigenfaces.T @ (train_data-overall_mean) 
+
+                # 将信息显示在文本编辑框中
+                self.info_textedit.clear()
+                self.show_info("训练数据集形状:", data.T.shape)
+                self.show_info("平均人脸形状:", overall_mean.shape)
+                self.show_info("特征脸形状:", eigenfaces.shape)
+                self.show_info("权重矩阵形状:", weight_matrix.shape)
+                # 识别率统计
+                wrong_times = 0
+                right_times = 0
+                for i in range(test_data.shape[0]):
+                    flag = test_image(i, faceshape, overall_mean, train_labels, train_data, test_labels, test_data[i], eigenfaces, weight_matrix)
+                    if flag:
+                        right_times += 1
+                    else:
+                        wrong_times += 1
+                rate = right_times / (right_times + wrong_times)
+
+            elif method == "MLDA":
+                # 调用 MLDA 函数并接收返回的中间变量信息
+                eigenfaces, overall_mean, classes_means, Z, Sb, Sw, W_value = MLDA(train_data, train_labels, faceshape, d)
+                # 将信息显示在文本编辑框中
+                self.info_textedit.clear()
+                self.show_info("训练数据集形状:", train_data.T.shape)
+                self.show_info("平均人脸形状:", overall_mean.shape)
+                self.show_info("类均值形状:", classes_means.shape)
+                self.show_info("Z形状:", Z.shape)
+                self.show_info("Sb形状:", Sb.shape)
+                self.show_info("Sw形状:", Sw.shape)
+                self.show_info("投影矩阵形状:", W_value.shape)
+                self.show_info("特征脸形状:", eigenfaces.shape)
+                # 识别率统计
+                wrong_times = 0
+                right_times = 0
+                for i in range(test_data.shape[0]):
+                    flag = test_query_class_sample(eigenfaces, test_data[i], i, overall_mean, train_data, train_labels, test_labels)
+                    if flag:
+                                right_times += 1         
+                    else:
+                        wrong_times += 1
+                rate = right_times / (right_times + wrong_times)
+
+            end_time = time.time()  # 记录结束时间
+            execution_time = end_time - start_time  # 计算执行时间
+
+            # 更新信息显示
+            self.info_label.setText(f"Recognition Rate: {rate}\nExecution Time: {execution_time:.2f} seconds")
+
+            # 显示特征脸图像
+            self.show_eigenfaces(eigenfaces, faceshape)
+
+        except Exception as e:
+            # 弹出错误窗口显示报错原因
+            error_message = f"错误类型: {type(e).__name__}\n错误信息: {str(e)}"
+            QMessageBox.critical(self, "错误", error_message)
+
 
     def show_info(self, title, info):
         # 将信息追加显示在文本编辑框中
@@ -169,6 +234,41 @@ class DLPPWindow(QMainWindow):
 
         # 刷新画布
         self.canvas.draw()
+
+    def toggle_parameters_visibility(self):
+        # 获取当前选择的方法
+        selected_method = self.method_combo.currentText()
+
+        # 设置参数框的可见性
+        if selected_method == "MLDA":
+            self.k_label.setVisible(False)
+            self.k_input.setVisible(False)
+            self.t_label.setVisible(False)
+            self.t_input.setVisible(False)
+            self.d_label.setVisible(True)
+            self.d_input.setVisible(True)
+            self.lpp_method_label.setVisible(False)
+            self.lpp_method_combo.setVisible(False)
+        elif selected_method == "LPP":
+            self.k_label.setVisible(True)
+            self.k_input.setVisible(True)
+            self.t_label.setVisible(True)
+            self.t_input.setVisible(True)
+            self.d_label.setVisible(True)
+            self.d_input.setVisible(True)
+            self.lpp_method_label.setVisible(True)
+            self.lpp_method_combo.setVisible(True)
+        elif selected_method == "DLPP":
+            self.k_label.setVisible(True)
+            self.k_input.setVisible(True)
+            self.t_label.setVisible(True)
+            self.t_input.setVisible(True)
+            self.d_label.setVisible(True)
+            self.d_input.setVisible(True)
+            self.lpp_method_label.setVisible(True)
+            self.lpp_method_combo.setVisible(True)
+        else:
+            raise ValueError(f"未知方法: {selected_method}")
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

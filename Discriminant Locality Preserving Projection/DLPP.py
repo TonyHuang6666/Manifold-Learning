@@ -2,6 +2,7 @@
 import os
 import cv2
 import numpy as np
+import scipy
 from scipy.sparse.linalg import eigs
 
 
@@ -51,7 +52,7 @@ def compute_neighborhood_matrix(Data, method, k):
         return knn_adjacency_matrix, distances
     elif method == 'epsilon':
         adjacency_matrix = np.zeros((n, n))
-        radius = compute_k_maximun_radius(n, distances, k)  # 计算每个数据点的邻域半径
+        radius = compute_avg_radius(n, distances)  # 计算每个数据点的邻域半径
         for i in range(n):  # 对于数据集中的每个样本点 i
             neighbors = np.where(distances[i] <= radius[i])[0]  # 获取epsilon邻域内的样本索引
             adjacency_matrix[i, neighbors] = 1
@@ -71,10 +72,7 @@ def construct_weight_matrix(Data, method, k, t):
     # 设置权重
     Weight_matrix[i_indices, j_indices] = similarity_matrix[i_indices, j_indices]
     Weight_matrix[j_indices, i_indices] = similarity_matrix[i_indices, j_indices]  # 对称矩阵
-    # 计算全局相似度
-    '''
-    修正权重矩阵的原理是利用全局相似度来修正局部相似度得到的权重矩阵，以使得整个权重矩阵更加平滑和连续。
-    '''
+    # 计算全局相似度并修正
     Weight_matrix += np.exp(-distances ** 2 / t)
     return Weight_matrix               
 
@@ -93,7 +91,66 @@ def compute_classes_mean_matrix(train_data, train_labels):
         means[i-1] = temp_sum / num_samples_per_class  # 计算当前类别的均值
     return means  # 返回每个类别的均值矩阵
 
-def LPP(train_data, train_labels, method, d, k, t):
+# 计算所有类别的整体均值矩阵
+def compute_overall_mean_matrix(classes_means):
+    overall_mean = np.mean(classes_means, axis=0)  # 计算所有类别的整体均值
+    return overall_mean.reshape(-1, 1)  # 返回整体均值矩阵（转置）
+
+# 计算中心类别矩阵
+def compute_center_class_matrix(train_data, train_labels, classes_means):
+    Z = np.zeros_like(train_data)  # 初始化中心类别矩阵
+    
+    for i in range(train_data.shape[0]):  # 遍历训练数据
+        class_index = int(train_labels[i]) - 1  # 获取当前样本所属类别的索引
+        Z[i] = train_data[i] - classes_means[class_index]  # 计算中心类别矩阵
+        
+    return Z  # 返回中心类别矩阵
+
+# 计算类间散布矩阵
+def compute_between_class_scatter_matrix(classes_means, overall_mean):
+    n = 5  # 训练集与测试集的比例
+    Sb = np.zeros((classes_means.shape[1], classes_means.shape[1]))  # 初始化类间散布矩阵
+    for i in range(classes_means.shape[0]):  # 遍历每个类别的均值矩阵
+        Sb = np.add(Sb, n * ((classes_means[i] - overall_mean) * (classes_means[i] - overall_mean).T))  # 计算类间散布矩阵
+    return Sb  # 返回类间散布矩阵
+
+# 计算类内散布矩阵
+def compute_class_scatter_matrix(Z):
+    Sw = np.dot(Z.T, Z)  # 计算类内散布矩阵
+    return Sw  # 返回类内散布矩阵
+
+
+def LPP(Data, d, method, k, t):
+    # Step 1: 计算权重矩阵
+    Weight_matrix = construct_weight_matrix(Data, method, k, t)
+    # Step 2: 计算度矩阵和拉普拉斯矩阵
+    Degree_matrix = np.diag(np.sum(Weight_matrix, axis=1))
+    Laplacian_matrix = Degree_matrix - Weight_matrix
+    # Step 3: 进行特征映射
+    eigenvalues, eigenvectors = eigs(Laplacian_matrix, k=d+1, which='SR')
+    sorted_indices = np.argsort(eigenvalues.real)
+    selected_indices = sorted_indices[1:d + 1]
+    selected_eigenvectors = eigenvectors.real[:, selected_indices]
+    return selected_eigenvectors
+
+def MLDA(train_data, train_labels, faceshape, d):
+    # 计算每个类别的均值矩阵
+    classes_means = compute_classes_mean_matrix(train_data, train_labels)
+    # 计算所有类别的整体均值矩阵
+    overall_mean = compute_overall_mean_matrix(classes_means)
+    # 计算中心类别矩阵
+    Z = compute_center_class_matrix(train_data, train_labels, classes_means)
+    # 计算类间散布矩阵
+    Sb = compute_between_class_scatter_matrix(classes_means, overall_mean)
+    # 计算类内散布矩阵
+    Sw = compute_class_scatter_matrix(Z)
+    # 计算投影矩阵W
+    W_value = np.dot(np.linalg.inv(Sw), Sb)  
+    # 计算广义特征值问题的特征值和特征向量，提取前d个最大特征值对应的特征向量
+    eigen_values, eigen_vectors = scipy.linalg.eigh(W_value, eigvals=((faceshape[0] * faceshape[1]-d),(faceshape[0] * faceshape[1]-1)))  # 计算特征值和特征向量
+    return eigen_vectors, overall_mean, classes_means, Z, Sb, Sw, W_value
+
+def Class_LPP(train_data, train_labels, method, d, k, t):
     Data = train_data.T
     n = len(train_labels)
     Weight_matrices = np.zeros((n, n)) # 存储每个类别的权重矩阵
@@ -110,9 +167,7 @@ def LPP(train_data, train_labels, method, d, k, t):
     Laplacian_matrices = Degree_matrices - Weight_matrices
     return Laplacian_matrices, Data
 
-
-
-def MLDA(train_data, train_labels, d):
+def DLPP_MLDA(train_data, train_labels, d):
     # 计算每个类别的均值矩阵
     classes_means = compute_classes_mean_matrix(train_data, train_labels)
     return classes_means.T
@@ -120,9 +175,9 @@ def MLDA(train_data, train_labels, d):
 
 def DLPP(train_data, train_labels, d, lpp_method, k, t):
     # Step 1: 使用MLDA进行特征提取
-    F = MLDA(train_data, train_labels, d)
+    F = DLPP_MLDA(train_data, train_labels, d)
     # Step 2: 使用LPP进行特征提取
-    L, X = LPP(train_data, train_labels, lpp_method, d, k, t)
+    L, X = Class_LPP(train_data, train_labels, lpp_method, d, k, t)
     # Step 3: 计算权重矩阵B
     num_classes = len(np.unique(train_labels))  # 计算训练集中的类别数
     B = np.zeros((num_classes, num_classes))  # 初始化权重矩阵B
@@ -215,4 +270,38 @@ def test_image(i, faceshape, overall_mean, train_labels, train_data, test_labels
     axes[1].set_title("Best Match")
     plt.show()
     """
+    return flag
+
+# 测试要查询的图像
+def test_query_class_sample(W, query_image, j, overall_mean, train_data, train_labels, test_labels):
+    # 计算查询图像的线性判别函数值,即计算 d(Q) = W^T (Q - P)
+    d = np.dot(W.T, (query_image - overall_mean))
+    # 计算 ||d||
+    discriminant_values = []
+    for i in range(train_data.shape[0]):
+        train_image = train_data[i]
+        train_d = np.dot(W.T, (train_image - overall_mean))
+        discriminant_value = np.linalg.norm(d - train_d)
+        discriminant_values.append(discriminant_value)
+    # 找到匹配的样本图像索引
+    best_match_index = np.argmin(discriminant_values)
+    
+    #判断是否匹配正确
+    flag = True
+    if train_labels[best_match_index] == test_labels[j]:
+        flag = True
+    else:
+        flag = False
+    '''
+    # 可视化测试图像和最佳匹配图像
+    fig, axes = plt.subplots(1, 2, figsize=(8, 4))
+    axes[0].imshow(query_image.reshape(faceshape), cmap='gray')
+    axes[0].set_title('Query Image')
+    axes[0].axis('off')
+    axes[1].imshow(train_data[best_match_index].reshape(faceshape), cmap='gray')
+    axes[1].set_title(f'Best Match Image (||d|| = {discriminant_values[best_match_index]:.2f})')
+    axes[1].axis('off')
+    plt.show()
+    '''
+    # 返回匹配结果
     return flag
