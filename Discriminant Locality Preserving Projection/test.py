@@ -1,12 +1,11 @@
 import sys
 import time
-import numpy as np
 import matplotlib.pyplot as plt
 from PyQt5.QtWidgets import QApplication, QMainWindow, QLabel, QVBoxLayout, QWidget, QPushButton, QFileDialog, QLineEdit, QComboBox, QTextEdit, QMessageBox
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from DLPP import *
 
-class DLPPWindow(QMainWindow):
+class Window(QMainWindow):
     def __init__(self):
         super().__init__()
 
@@ -71,7 +70,7 @@ class DLPPWindow(QMainWindow):
         self.lpp_method_combo.addItem("epsilon")
         self.main_layout.addWidget(self.lpp_method_combo)
 
-        self.train_test_split_label = QLabel("请选择训练集/测试集划分比例:")
+        self.train_test_split_label = QLabel("请选择训练集划分比例:")
         self.main_layout.addWidget(self.train_test_split_label)
         self.train_test_split_combo = QComboBox()
         for ratio in range(5, 100, 5):
@@ -184,8 +183,8 @@ class DLPPWindow(QMainWindow):
                 self.show_info("平均人脸形状:", overall_mean.shape)
                 self.show_info("类均值形状:", classes_means.shape)
                 self.show_info("Z形状:", Z.shape)
-                self.show_info("Sb形状:", Sb.shape)
-                self.show_info("Sw形状:", Sw.shape)
+                self.show_info("类间散度矩阵形状:", Sb.shape)
+                self.show_info("类内散度矩阵形状:", Sw.shape)
                 self.show_info("投影矩阵形状:", W_value.shape)
                 self.show_info("特征脸形状:", eigenfaces.shape)
                 # 识别率统计
@@ -270,6 +269,6 @@ class DLPPWindow(QMainWindow):
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    window = DLPPWindow()
+    window = Window()
     window.show()
     sys.exit(app.exec_())
