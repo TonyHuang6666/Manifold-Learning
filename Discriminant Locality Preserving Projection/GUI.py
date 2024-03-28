@@ -19,7 +19,7 @@ class Window(QMainWindow):
         self.central_widget.setLayout(self.main_layout)
 
         # 选择数据集路径
-        self.dataset_label = QLabel("选择数据集文件夹:")
+        self.dataset_label = QLabel("请选择数据集文件夹:")
         self.main_layout.addWidget(self.dataset_label)
         self.default_dataset_path = "D:\OneDrive - email.szu.edu.cn\Manifold Learning\Discriminant Locality Preserving Projection\ORL"
         self.dataset_path_label = QLabel(f"数据集默认路径: {self.default_dataset_path}")  # 显示默认数据集文件夹的路径
@@ -28,7 +28,7 @@ class Window(QMainWindow):
         self.dataset_button.clicked.connect(self.select_dataset)
         self.main_layout.addWidget(self.dataset_button)
 
-        self.target_size_label = QLabel("选择图像缩放百分比:")
+        self.target_size_label = QLabel("请选择图像缩放百分比:")
         self.main_layout.addWidget(self.target_size_label)
         self.target_size_combo = QComboBox()
         for percentage in range(5, 105, 5):
@@ -36,25 +36,25 @@ class Window(QMainWindow):
         self.target_size_combo.setCurrentText("20%")  # 设置初始值为20%,即长宽均为原来的20%且取整
         self.main_layout.addWidget(self.target_size_combo)
 
-        self.d_label = QLabel("请输入d:")
+        self.d_label = QLabel("请输入降维后的维度d:")
         self.main_layout.addWidget(self.d_label)
         self.d_input = QLineEdit()
         self.d_input.setText("70")  # 默认值为70
         self.main_layout.addWidget(self.d_input)
 
-        self.k_label = QLabel("请输入k:")
+        self.k_label = QLabel("请输入数据点最近邻数量k:")
         self.main_layout.addWidget(self.k_label)
         self.k_input = QLineEdit()
         self.k_input.setText("100")  # 默认值为100
         self.main_layout.addWidget(self.k_input)
 
-        self.t_label = QLabel("请输入t:")
+        self.t_label = QLabel("请输入热核参数t:")
         self.main_layout.addWidget(self.t_label)
         self.t_input = QLineEdit()
         self.t_input.setText("60000")  # 默认值为60000
         self.main_layout.addWidget(self.t_input)
 
-        self.method_label = QLabel("选择方法:")
+        self.method_label = QLabel("请选择数据降维方法:")
         self.main_layout.addWidget(self.method_label)
         self.method_combo = QComboBox()
         self.method_combo.addItem("DLPP")
@@ -63,7 +63,7 @@ class Window(QMainWindow):
         self.method_combo.currentIndexChanged.connect(self.toggle_parameters_visibility)  # 连接方法选择框的信号与槽函数
         self.main_layout.addWidget(self.method_combo)
 
-        self.lpp_method_label = QLabel("请选择LPP方法:")
+        self.lpp_method_label = QLabel("请选择邻域选择方法:")
         self.main_layout.addWidget(self.lpp_method_label)
         self.lpp_method_combo = QComboBox()
         self.lpp_method_combo.addItem("knn")
@@ -79,12 +79,15 @@ class Window(QMainWindow):
         self.train_test_split_combo.setCurrentText("0.50")  # 设置初始值为当前选择
         self.main_layout.addWidget(self.train_test_split_combo)
 
-        self.info_label = QLabel("程序信息将在这里显示")
+        self.info_label = QLabel("程序信息显示:")
         self.main_layout.addWidget(self.info_label)
 
         self.info_textedit = QTextEdit()  # 用于显示函数信息的文本编辑框
         self.info_textedit.setReadOnly(True)  # 设置为只读模式
         self.main_layout.addWidget(self.info_textedit)
+
+        self.eigenfaces_label = QLabel("特征脸显示:")
+        self.main_layout.addWidget(self.eigenfaces_label)
 
         self.canvas = FigureCanvas(plt.figure())
         self.main_layout.addWidget(self.canvas)
@@ -202,7 +205,7 @@ class Window(QMainWindow):
             execution_time = end_time - start_time  # 计算执行时间
 
             # 更新信息显示
-            self.info_label.setText(f"Recognition Rate: {rate}\nExecution Time: {execution_time:.2f} seconds")
+            self.info_label.setText(f"图像识别正确率: {rate}\n程序运行时间: {execution_time:.2f} 秒")
 
             # 显示特征脸图像
             self.show_eigenfaces(eigenfaces, faceshape)
