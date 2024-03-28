@@ -113,16 +113,15 @@ class DLPPWindow(QMainWindow):
             method = self.method_combo.currentText()
             lpp_method = self.lpp_method_combo.currentText()
             train_test_split_ratio = float(self.train_test_split_combo.currentText())
-
+            data_temp, labels_temp, faceshape_temp = read_images(self.dataset_path, target_size=None)
             target_size_str = self.target_size_combo.currentText()
             if target_size_str == "100%":
                 target_size = None
             else:
                 percentage = int(target_size_str[:-1]) / 100.0
-                target_size = (int(112 * percentage), int(92 * percentage))  # 原始尺寸112x92像素
-
+                target_size = (int(faceshape_temp[0] * percentage), int(faceshape_temp[1] * percentage))  # 使用 faceshape 确定原始尺寸
+            
             start_time = time.time()  # 记录开始时间
-
             data, labels, faceshape = read_images(self.dataset_path, target_size=target_size)
             train_data, train_labels, test_data, test_labels = train_test_split(data, labels, train_test_split_ratio=train_test_split_ratio)
             if method == "DLPP":
@@ -159,7 +158,6 @@ class DLPPWindow(QMainWindow):
                 eigenfaces = LPP(train_data, d, lpp_method, k, t)
                 overall_mean = np.mean(train_data , axis=1).reshape(-1, 1)
                 weight_matrix = eigenfaces.T @ (train_data-overall_mean) 
-
                 # 将信息显示在文本编辑框中
                 self.info_textedit.clear()
                 self.show_info("训练数据集形状:", data.T.shape)
