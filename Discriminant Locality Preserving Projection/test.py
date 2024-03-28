@@ -11,7 +11,7 @@ class DLPPWindow(QMainWindow):
         super().__init__()
 
         self.setWindowTitle("DLPP程序图形界面")
-        self.setGeometry(100, 100, 800, 600)
+        self.setGeometry(200, 100, 1200, 1000)
 
         self.central_widget = QWidget()
         self.setCentralWidget(self.central_widget)
@@ -19,28 +19,22 @@ class DLPPWindow(QMainWindow):
         self.main_layout = QVBoxLayout()
         self.central_widget.setLayout(self.main_layout)
 
-        # 默认数据集路径
-        self.default_dataset_path = "D:\OneDrive - email.szu.edu.cn\Manifold Learning\Discriminant Locality Preserving Projection\ORL"
-
         # 选择数据集路径
         self.dataset_label = QLabel("选择数据集文件夹:")
         self.main_layout.addWidget(self.dataset_label)
+        self.default_dataset_path = "D:\OneDrive - email.szu.edu.cn\Manifold Learning\Discriminant Locality Preserving Projection\ORL"
         self.dataset_path_label = QLabel(f"ORL数据集路径: {self.default_dataset_path}")  # 显示默认数据集文件夹的路径
         self.main_layout.addWidget(self.dataset_path_label)
         self.dataset_button = QPushButton("选择其他数据集")
         self.dataset_button.clicked.connect(self.select_dataset)
         self.main_layout.addWidget(self.dataset_button)
 
-        self.target_size_label = QLabel("选择图像缩放尺寸:")
+        self.target_size_label = QLabel("选择图像缩放百分比:")
         self.main_layout.addWidget(self.target_size_label)
         self.target_size_combo = QComboBox()
-        self.target_size_combo.addItem("8x8")
-        self.target_size_combo.addItem("16x16")
-        self.target_size_combo.addItem("32x32")
-        self.target_size_combo.addItem("64x64")
-        self.target_size_combo.addItem("128x128")
-        self.target_size_combo.addItem("原尺寸")
-        self.target_size_combo.setCurrentText("32x32")  # 设置初始值为32x32
+        for percentage in range(5, 105, 5):
+            self.target_size_combo.addItem(f"{percentage}%")
+        self.target_size_combo.setCurrentText("20%")  # 设置初始值为20%,即长宽均为原来的20%且取整
         self.main_layout.addWidget(self.target_size_combo)
 
         self.d_label = QLabel("请输入d:")
@@ -110,10 +104,11 @@ class DLPPWindow(QMainWindow):
         train_test_split_ratio = float(self.train_test_split_combo.currentText())
 
         target_size_str = self.target_size_combo.currentText()
-        if target_size_str == "原尺寸":
+        if target_size_str == "100%":
             target_size = None
         else:
-            target_size = tuple(map(int, target_size_str.split("x")))
+            percentage = int(target_size_str[:-1]) / 100.0
+            target_size = (int(112 * percentage), int(92 * percentage))  # 原始尺寸112x92像素
 
         start_time = time.time()  # 记录开始时间
 
@@ -174,7 +169,6 @@ class DLPPWindow(QMainWindow):
 
         # 刷新画布
         self.canvas.draw()
-
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
