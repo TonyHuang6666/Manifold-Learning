@@ -1,10 +1,7 @@
 import sys
-import os
 import time
 import matplotlib.pyplot as plt
-from PyQt5.QtWidgets import QApplication, QMainWindow, QLabel, QVBoxLayout, QWidget, QPushButton, QFileDialog, QLineEdit, QComboBox
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QDoubleValidator
+from PyQt5.QtWidgets import QApplication, QMainWindow, QLabel, QVBoxLayout, QWidget, QPushButton, QFileDialog, QLineEdit, QComboBox, QTextEdit
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from DLPP import *
 
@@ -14,7 +11,7 @@ class DLPPWindow(QMainWindow):
         super().__init__()
 
         self.setWindowTitle("DLPP程序图形界面")
-        self.setGeometry(100, 100, 800, 600)
+        self.setGeometry(100, 100, 1800, 1000)
 
         self.central_widget = QWidget()
         self.setCentralWidget(self.central_widget)
@@ -68,8 +65,12 @@ class DLPPWindow(QMainWindow):
         self.train_test_split_combo.setCurrentText("0.50")  # 设置初始值为当前选择
         self.main_layout.addWidget(self.train_test_split_combo)
 
-        self.info_label = QLabel("DLPP程序信息将在这里显示")
+        self.info_label = QLabel("矩阵形状信息:")
         self.main_layout.addWidget(self.info_label)
+
+        self.info_textedit = QTextEdit()  # 用于显示DLPP函数信息的文本编辑框
+        self.info_textedit.setReadOnly(True)  # 设置为只读模式
+        self.main_layout.addWidget(self.info_textedit)
 
         self.canvas = FigureCanvas(plt.figure())
         self.main_layout.addWidget(self.canvas)
@@ -101,11 +102,21 @@ class DLPPWindow(QMainWindow):
         # 调用 DLPP.py 文件中的相关函数，并获取其输出信息
         data, labels, faceshape = read_images(self.dataset_path)
         train_data, train_labels, test_data, test_labels = train_test_split(data, labels, train_test_split_ratio=train_test_split_ratio)
-
-        dlpp_eigenfaces = DLPP(train_data, train_labels, d, lpp_method, k, t)
-        overall_mean = np.mean(train_data, axis=0).reshape(-1, 1)
+        overall_mean = np.mean(train_data, axis=0).reshape(-1, 1) # 计算训练集的整体均值脸
+        # 调用 DLPP 函数并接收返回的中间变量信息
+        F, L, B, objective_value, dlpp_eigenfaces = DLPP(train_data, train_labels, d, lpp_method, k, t)
         dlpp_weight_matrix = np.dot(dlpp_eigenfaces.T, train_data.T- overall_mean)
 
+        # 将信息显示在文本编辑框中
+        self.show_info("训练数据集形状:", train_data.T.shape)
+        self.show_info("整体均值脸形状:", overall_mean.shape)
+        self.show_info("类平均脸形状:", F.shape)
+        self.show_info("拉普拉斯矩阵形状:", L.shape)
+        self.show_info("类权重矩阵形状:", B.shape)
+        self.show_info("目标函数形状:", objective_value.shape)
+        self.show_info("特征脸形状:", dlpp_eigenfaces.shape)
+        self.show_info("权重矩阵形状:", dlpp_weight_matrix.T.shape)
+    
         # 识别率统计
         wrong_times = 0
         right_times = 0
@@ -125,6 +136,10 @@ class DLPPWindow(QMainWindow):
 
         # 显示特征脸图像
         self.show_eigenfaces(dlpp_eigenfaces, faceshape)
+
+    def show_info(self, title, info):
+        # 将信息追加显示在文本编辑框中
+        self.info_textedit.append(f"{title}: {info}")
 
     def show_eigenfaces(self, eigenfaces, faceshape):
         # 清空之前的图像

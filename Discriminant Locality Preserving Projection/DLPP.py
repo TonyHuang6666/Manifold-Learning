@@ -2,7 +2,6 @@
 import os
 import cv2
 import numpy as np
-import matplotlib.pyplot as plt
 from scipy.sparse.linalg import eigs
 
 
@@ -122,10 +121,8 @@ def MLDA(train_data, train_labels, d):
 def DLPP(train_data, train_labels, d, lpp_method, k, t):
     # Step 1: 使用MLDA进行特征提取
     F = MLDA(train_data, train_labels, d)
-    print("类平均脸形状:", F.shape)
     # Step 2: 使用LPP进行特征提取
     L, X = LPP(train_data, train_labels, lpp_method, d, k, t)
-    print("拉普拉斯矩阵形状:", L.shape)
     # Step 3: 计算权重矩阵B
     num_classes = len(np.unique(train_labels))  # 计算训练集中的类别数
     B = np.zeros((num_classes, num_classes))  # 初始化权重矩阵B
@@ -140,12 +137,9 @@ def DLPP(train_data, train_labels, d, lpp_method, k, t):
     # Step 4: 计算E和H矩阵
     E = np.diag(np.sum(B, axis=1))
     H = E - B
-    print("类权重矩阵形状:", B.shape)
     # Step 5: 计算目标函数的分母和分子
     denominator = np.dot(np.dot(F, H), F.T)
-    print("分母形状:", denominator.shape)
     numerator = np.dot(np.dot(X, L), X.T)
-    print("分子形状:", numerator.shape)
     # Step 6: 分式
     objective_value = numerator / denominator
     # Step 7: 求解广义特征值问题的特征值和特征向量
@@ -153,7 +147,7 @@ def DLPP(train_data, train_labels, d, lpp_method, k, t):
     sorted_indices = np.argsort(eigenvalues.real)
     selected_indices = sorted_indices[1:d + 1]  
     selected_eigenvectors = eigenvectors.real[:, selected_indices] 
-    return selected_eigenvectors
+    return F, L, B, objective_value, selected_eigenvectors
 
 
 # 读取数据集
@@ -219,28 +213,3 @@ def test_image(i, faceshape, overall_mean, train_labels, train_data, test_labels
     plt.show()
     """
     return flag
-
-
-def read_images1(dataset_dir, target_size=(32, 32)):
-    data = []  # 存储图像数据的列表
-    labels = []  # 存储标签的列表
-    faceshape = [] # 存储图像形状
-    
-    # 遍历文件夹中的所有图像文件
-    for file_name in os.listdir(dataset_dir):
-        file_path = os.path.join(dataset_dir, file_name)  # 图像文件路径
-        if os.path.isfile(file_path):  # 确保当前路径指向一个文件而不是文件夹
-            img = cv2.imread(file_path, cv2.IMREAD_GRAYSCALE)  # 读取灰度图像
-            if img is not None:  # 确保成功读取图像
-                # 缩放图像至目标尺寸
-                img = cv2.resize(img, target_size, interpolation=cv2.INTER_AREA)
-                # 提取图像名称中的标签信息（这里假设文件名的第一个字符串是人的标签）
-                label = int(file_name.split('.')[0].replace('subject', ''))
-                data.append(img.flatten())  # 将图像展平并添加到数据列表中
-                labels.append(label)  # 将标签添加到标签列表中
-                # 更新图像形状（只需在第一个图像上执行一次）
-                if not faceshape:
-                    faceshape = img.shape
-    
-    return np.array(data), np.array(labels).reshape(-1, 1), faceshape  # 返回图像数据和标签
-
