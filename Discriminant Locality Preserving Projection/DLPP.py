@@ -6,7 +6,7 @@ import scipy
 from scipy.sparse.linalg import eigs
 
 
-# LPP算法函数
+###############################LPP算法函数######################################
 
 # 以每个点到其他所有点的平均值作为每个数据点的平均邻域半径
 def compute_avg_radius(n, distances): 
@@ -74,10 +74,26 @@ def construct_weight_matrix(Data, method, k, t):
     Weight_matrix[j_indices, i_indices] = similarity_matrix[i_indices, j_indices]  # 对称矩阵
     # 计算全局相似度并修正
     Weight_matrix += np.exp(-distances ** 2 / t)
-    return Weight_matrix               
+    return Weight_matrix   
+
+def LPP(Data, d, method, k, t):
+    # Step 1: 计算权重矩阵
+    Weight_matrix = construct_weight_matrix(Data, method, k, t)
+    # Step 2: 计算度矩阵和拉普拉斯矩阵
+    Degree_matrix = np.diag(np.sum(Weight_matrix, axis=1))
+    Laplacian_matrix = Degree_matrix - Weight_matrix
+    # Step 3: 进行特征映射
+    eigenvalues, eigenvectors = eigs(Laplacian_matrix, k=d+1, which='SR')
+    sorted_indices = np.argsort(eigenvalues.real)
+    selected_indices = sorted_indices[1:d + 1]
+    selected_eigenvectors = eigenvectors.real[:, selected_indices]
+    return selected_eigenvectors        
+    
+###############################LPP算法函数######################################
 
 
-# MLDA算法函数
+
+###############################MLDA算法函数######################################
 
 # 计算每个类别的均值矩阵
 def compute_classes_mean_matrix(train_data, train_labels):
@@ -119,20 +135,6 @@ def compute_class_scatter_matrix(Z):
     Sw = np.dot(Z.T, Z)  # 计算类内散布矩阵
     return Sw  # 返回类内散布矩阵
 
-
-def LPP(Data, d, method, k, t):
-    # Step 1: 计算权重矩阵
-    Weight_matrix = construct_weight_matrix(Data, method, k, t)
-    # Step 2: 计算度矩阵和拉普拉斯矩阵
-    Degree_matrix = np.diag(np.sum(Weight_matrix, axis=1))
-    Laplacian_matrix = Degree_matrix - Weight_matrix
-    # Step 3: 进行特征映射
-    eigenvalues, eigenvectors = eigs(Laplacian_matrix, k=d+1, which='SR')
-    sorted_indices = np.argsort(eigenvalues.real)
-    selected_indices = sorted_indices[1:d + 1]
-    selected_eigenvectors = eigenvectors.real[:, selected_indices]
-    return selected_eigenvectors
-
 def MLDA(train_data, train_labels, faceshape, d):
     # 计算每个类别的均值矩阵
     classes_means = compute_classes_mean_matrix(train_data, train_labels)
@@ -150,6 +152,13 @@ def MLDA(train_data, train_labels, faceshape, d):
     eigen_values, eigen_vectors = scipy.linalg.eigh(W_value, eigvals=((faceshape[0] * faceshape[1]-d),(faceshape[0] * faceshape[1]-1)))  # 计算特征值和特征向量
     return eigen_vectors, overall_mean, classes_means, Z, Sb, Sw, W_value
 
+###############################MLDA算法函数######################################
+
+
+
+###############################DLPP算法函数######################################
+
+# 计算每个类别的权重矩阵，度矩阵和拉普拉斯矩阵
 def DLPP_LPP(train_data, train_labels, method, d, k, t):
     Data = train_data.T
     n = len(train_labels)
@@ -167,11 +176,10 @@ def DLPP_LPP(train_data, train_labels, method, d, k, t):
     Laplacian_matrices = Degree_matrices - Weight_matrices
     return Laplacian_matrices, Data
 
+# 计算每个类别的均值矩阵
 def DLPP_MLDA(train_data, train_labels, d):
-    # 计算每个类别的均值矩阵
     classes_means = compute_classes_mean_matrix(train_data, train_labels)
     return classes_means.T
-
 
 def DLPP(train_data, train_labels, d, lpp_method, k, t):
     # Step 1: 使用MLDA进行特征提取
@@ -204,6 +212,9 @@ def DLPP(train_data, train_labels, d, lpp_method, k, t):
     selected_eigenvectors = eigenvectors.real[:, selected_indices] 
     return F, L, B, objective_value, selected_eigenvectors
 
+###############################DLPP算法函数######################################
+
+
 
 # 读取数据集
 def read_images(dataset_dir, target_size=None):
@@ -224,8 +235,6 @@ def read_images(dataset_dir, target_size=None):
             data.append(img.flatten())  # 将图像展平并添加到数据列表中
             labels.append(int(class_dir))  # 将类别标签添加到标签列表中
     return np.array(data), np.array(labels).reshape(-1, 1), faceshape  # 返回图像数据和标签
-
-
 
 # 训练集和测试集划分
 def train_test_split(data, labels, train_test_split_ratio):

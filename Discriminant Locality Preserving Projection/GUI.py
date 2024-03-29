@@ -1,7 +1,8 @@
 import sys
 import time
+import numpy as np
 import matplotlib.pyplot as plt
-from PyQt5.QtWidgets import QApplication, QMainWindow, QLabel, QVBoxLayout, QWidget, QPushButton, QFileDialog, QLineEdit, QComboBox, QTextEdit, QMessageBox
+from PyQt5.QtWidgets import QApplication, QMainWindow, QLabel, QVBoxLayout, QWidget, QPushButton, QFileDialog, QLineEdit, QComboBox, QTextEdit, QMessageBox, QDesktopWidget
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from DLPP import *
 
@@ -10,7 +11,9 @@ class Window(QMainWindow):
         super().__init__()
 
         self.setWindowTitle("DLPP LPP LDA 人脸特征提取与识别程序")
-        self.setGeometry(200, 100, 1200, 1000)
+        self.setGeometry(0, 0, 1200, 1000)
+        # 居中显示窗口
+        self.center_on_screen()
 
         self.central_widget = QWidget()
         self.setCentralWidget(self.central_widget)
@@ -28,6 +31,15 @@ class Window(QMainWindow):
         self.dataset_button.clicked.connect(self.select_dataset)
         self.main_layout.addWidget(self.dataset_button)
 
+        self.train_test_split_label = QLabel("请选择训练集划分比例:")
+        self.main_layout.addWidget(self.train_test_split_label)
+        self.train_test_split_combo = QComboBox()
+        for ratio in range(5, 100, 5):
+            ratio_decimal = ratio / 100.0
+            self.train_test_split_combo.addItem("{:.2f}".format(ratio_decimal))
+        self.train_test_split_combo.setCurrentText("0.50")  # 设置初始值为当前选择
+        self.main_layout.addWidget(self.train_test_split_combo)
+
         self.target_size_label = QLabel("请选择图像缩放百分比:")
         self.main_layout.addWidget(self.target_size_label)
         self.target_size_combo = QComboBox()
@@ -42,6 +54,15 @@ class Window(QMainWindow):
         self.d_input.setText("70")  # 默认值为70
         self.main_layout.addWidget(self.d_input)
 
+        self.method_label = QLabel("请选择数据降维方法:")
+        self.main_layout.addWidget(self.method_label)
+        self.method_combo = QComboBox()
+        self.method_combo.addItem("DLPP")
+        self.method_combo.addItem("LPP")
+        self.method_combo.addItem("MLDA")
+        self.method_combo.currentIndexChanged.connect(self.toggle_parameters_visibility)  # 连接方法选择框的信号与槽函数
+        self.main_layout.addWidget(self.method_combo)
+
         self.k_label = QLabel("请输入数据点最近邻数量k:")
         self.main_layout.addWidget(self.k_label)
         self.k_input = QLineEdit()
@@ -54,30 +75,12 @@ class Window(QMainWindow):
         self.t_input.setText("60000")  # 默认值为60000
         self.main_layout.addWidget(self.t_input)
 
-        self.method_label = QLabel("请选择数据降维方法:")
-        self.main_layout.addWidget(self.method_label)
-        self.method_combo = QComboBox()
-        self.method_combo.addItem("DLPP")
-        self.method_combo.addItem("LPP")
-        self.method_combo.addItem("MLDA")
-        self.method_combo.currentIndexChanged.connect(self.toggle_parameters_visibility)  # 连接方法选择框的信号与槽函数
-        self.main_layout.addWidget(self.method_combo)
-
         self.lpp_method_label = QLabel("请选择邻域选择方法:")
         self.main_layout.addWidget(self.lpp_method_label)
         self.lpp_method_combo = QComboBox()
         self.lpp_method_combo.addItem("knn")
         self.lpp_method_combo.addItem("epsilon")
         self.main_layout.addWidget(self.lpp_method_combo)
-
-        self.train_test_split_label = QLabel("请选择训练集划分比例:")
-        self.main_layout.addWidget(self.train_test_split_label)
-        self.train_test_split_combo = QComboBox()
-        for ratio in range(5, 100, 5):
-            ratio_decimal = ratio / 100.0
-            self.train_test_split_combo.addItem("{:.2f}".format(ratio_decimal))
-        self.train_test_split_combo.setCurrentText("0.50")  # 设置初始值为当前选择
-        self.main_layout.addWidget(self.train_test_split_combo)
 
         self.info_label = QLabel("程序信息显示:")
         self.main_layout.addWidget(self.info_label)
@@ -98,6 +101,18 @@ class Window(QMainWindow):
 
         # 初始化数据集路径变量
         self.dataset_path = self.default_dataset_path
+
+    def center_on_screen(self):
+        # 获取屏幕尺寸和窗口尺寸
+        screen = QDesktopWidget().screenGeometry()
+        window_size = self.geometry()
+
+        # 计算窗口在屏幕中央的位置
+        x = (screen.width() - window_size.width()) // 2
+        y = (screen.height() - window_size.height()) // 2
+
+        # 移动窗口到屏幕中央
+        self.move(x, y)
 
     def select_dataset(self):
         options = QFileDialog.Options()
@@ -224,13 +239,16 @@ class Window(QMainWindow):
         # 清空之前的图像
         self.canvas.figure.clear()
 
-        # 显示前16个特征脸
-        num_faces = min(eigenfaces.shape[1], 16)
-        num_rows = num_faces // 4
-        num_cols = 4
+        # 计算特征脸的行数和列数以填充整个窗口
+        num_faces = eigenfaces.shape[1]
+        num_cols = int(np.ceil(np.sqrt(num_faces)))
+        num_rows = int(np.ceil(num_faces / num_cols))
+
+        # 显示特征脸并取消坐标轴
         for i in range(num_faces):
             ax = self.canvas.figure.add_subplot(num_rows, num_cols, i + 1)
             ax.imshow(eigenfaces[:, i].reshape(faceshape), cmap="gray")
+            ax.axis('off')  # 取消坐标轴
 
         # 刷新画布
         self.canvas.draw()
