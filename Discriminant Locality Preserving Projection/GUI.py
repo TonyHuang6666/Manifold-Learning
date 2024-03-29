@@ -82,6 +82,10 @@ class Window(QMainWindow):
         self.lpp_method_combo.addItem("epsilon")
         self.main_layout.addWidget(self.lpp_method_combo)
 
+        self.execute_button = QPushButton("执行程序")
+        self.execute_button.clicked.connect(self.execute_algorithm)
+        self.main_layout.addWidget(self.execute_button)
+
         self.info_label = QLabel("程序信息显示:")
         self.main_layout.addWidget(self.info_label)
 
@@ -94,10 +98,6 @@ class Window(QMainWindow):
 
         self.canvas = FigureCanvas(plt.figure())
         self.main_layout.addWidget(self.canvas)
-
-        self.execute_button = QPushButton("执行程序")
-        self.execute_button.clicked.connect(self.execute_algorithm)
-        self.main_layout.addWidget(self.execute_button)
 
         # 初始化数据集路径变量
         self.dataset_path = self.default_dataset_path
@@ -139,6 +139,11 @@ class Window(QMainWindow):
                 target_size = (int(faceshape_temp[0] * percentage), int(faceshape_temp[1] * percentage))  # 使用 faceshape 确定原始尺寸
             
             start_time = time.time()  # 记录开始时间
+
+            # 更改按钮文本为“程序执行中”
+            self.execute_button.setText("程序执行中，请勿操作！")
+            QApplication.processEvents()  # 强制刷新界面，立即显示按钮文本变更
+
             data, labels, faceshape = read_images(self.dataset_path, target_size=target_size)
             train_data, train_labels, test_data, test_labels = train_test_split(data, labels, train_test_split_ratio=train_test_split_ratio)
             if method == "DLPP":
@@ -229,6 +234,10 @@ class Window(QMainWindow):
             # 弹出错误窗口显示报错原因
             error_message = f"错误类型: {type(e).__name__}\n错误信息: {str(e)}"
             QMessageBox.critical(self, "错误", error_message)
+
+        finally:
+            # 执行完毕后还原按钮文本为“执行程序”
+            self.execute_button.setText("执行程序")
 
 
     def show_info(self, title, info):
