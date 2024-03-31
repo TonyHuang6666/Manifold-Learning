@@ -60,6 +60,7 @@ class Window(QMainWindow):
         self.method_combo.addItem("DLPP")
         self.method_combo.addItem("LPP")
         self.method_combo.addItem("MLDA")
+        self.method_combo.addItem("PCA")
         self.method_combo.currentIndexChanged.connect(self.toggle_parameters_visibility)  # 连接方法选择框的信号与槽函数
         self.main_layout.addWidget(self.method_combo)
 
@@ -221,6 +222,27 @@ class Window(QMainWindow):
                         wrong_times += 1
                 rate = right_times / (right_times + wrong_times)
 
+            elif method == "PCA":
+                # 调用 PCA 函数并接收返回的中间变量信息
+                eigenfaces, overall_mean = PCA(train_data, d)
+                weight_matrix = eigenfaces.T @ (train_data - overall_mean).T
+                # 将信息显示在文本编辑框中
+                self.info_textedit.clear()
+                self.show_info("训练数据集形状:", train_data.T.shape)
+                self.show_info("平均人脸形状:", overall_mean.shape)
+                self.show_info("特征脸形状:", eigenfaces.shape)
+                self.show_info("权重矩阵形状:", weight_matrix.shape)
+                # 识别率统计
+                wrong_times = 0
+                right_times = 0
+                for i in range(test_data.shape[0]):
+                    flag = test_image(i, faceshape, overall_mean, train_labels, train_data, test_labels, test_data[i], eigenfaces, weight_matrix)
+                    if flag:
+                        right_times += 1
+                    else:
+                        wrong_times += 1
+                rate = right_times / (right_times + wrong_times)
+
             end_time = time.time()  # 记录结束时间
             execution_time = end_time - start_time  # 计算执行时间
 
@@ -294,6 +316,15 @@ class Window(QMainWindow):
             self.d_input.setVisible(True)
             self.lpp_method_label.setVisible(True)
             self.lpp_method_combo.setVisible(True)
+        elif selected_method == "PCA":
+            self.k_label.setVisible(False)
+            self.k_input.setVisible(False)
+            self.t_label.setVisible(False)
+            self.t_input.setVisible(False)
+            self.d_label.setVisible(True)
+            self.d_input.setVisible(True)
+            self.lpp_method_label.setVisible(False)
+            self.lpp_method_combo.setVisible(False)
         else:
             raise ValueError(f"未知方法: {selected_method}")
 

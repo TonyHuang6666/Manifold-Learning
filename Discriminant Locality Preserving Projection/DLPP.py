@@ -5,6 +5,24 @@ import numpy as np
 import scipy
 from scipy.sparse.linalg import eigs
 
+###############################PCA算法函数######################################
+# PCA实现函数
+def PCA(X, n_components):
+    # 计算数据矩阵的均值
+    mean = np.mean(X, axis=0)
+    # 中心化数据矩阵
+    X_centered = X - mean
+    # 计算数据矩阵的协方差矩阵
+    covariance_matrix = np.cov(X_centered, rowvar=False)
+    # 计算协方差矩阵的特征值和特征向量
+    eigenvalues, eigenvectors = np.linalg.eigh(covariance_matrix)
+    # 对特征向量按特征值从大到小排序
+    sorted_indices = np.argsort(eigenvalues)[::-1]
+    sorted_eigenvectors = eigenvectors[:, sorted_indices]
+    # 选取前n_components个特征向量
+    principal_components = sorted_eigenvectors[:, :n_components]
+    # 返回投影矩阵和均值向量
+    return principal_components, mean
 
 ###############################LPP算法函数######################################
 
