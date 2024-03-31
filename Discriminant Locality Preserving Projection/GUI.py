@@ -182,7 +182,7 @@ class Window(QMainWindow):
                 weight_matrix = eigenfaces.T @ (train_data-overall_mean) 
                 # 将信息显示在文本编辑框中
                 self.info_textedit.clear()
-                self.show_info("训练数据集形状:", data.T.shape)
+                self.show_info("训练数据集形状:", train_data.T.shape)
                 self.show_info("平均人脸形状:", overall_mean.shape)
                 self.show_info("特征脸形状:", eigenfaces.shape)
                 self.show_info("权重矩阵形状:", weight_matrix.shape)
@@ -257,7 +257,7 @@ class Window(QMainWindow):
         for i in range(num_faces):
             ax = self.canvas.figure.add_subplot(num_rows, num_cols, i + 1)
             ax.imshow(eigenfaces[:, i].reshape(faceshape), cmap="gray")
-            ax.axis('off')  # 取消坐标轴
+            ax.axis('off')
 
         # 刷新画布
         self.canvas.draw()
