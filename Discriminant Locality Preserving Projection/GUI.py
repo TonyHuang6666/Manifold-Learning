@@ -157,7 +157,7 @@ class Window(QMainWindow):
                 # 将信息显示在文本编辑框中
                 self.info_textedit.clear()
                 self.show_info("训练数据集形状:", train_data.T.shape)
-                self.show_info("整体均值脸形状:", overall_mean.shape)
+                self.show_info("平均人脸形状:", overall_mean.shape)
                 self.show_info("类平均脸形状:", F.shape)
                 self.show_info("拉普拉斯矩阵形状:", L.shape)
                 self.show_info("类权重矩阵形状:", B.shape)
@@ -173,7 +173,7 @@ class Window(QMainWindow):
                         right_times += 1
                     else:
                         wrong_times += 1
-                rate = right_times / (right_times + wrong_times)
+                rate = right_times / test_data.shape[0]
 
             elif method == "LPP":
                 # 调用 LPP 函数并接收返回的中间变量信息
@@ -183,7 +183,7 @@ class Window(QMainWindow):
                 weight_matrix = eigenfaces.T @ (train_data-overall_mean) 
                 # 将信息显示在文本编辑框中
                 self.info_textedit.clear()
-                self.show_info("训练数据集形状:", train_data.T.shape)
+                self.show_info("训练数据集形状:", train_data.shape)
                 self.show_info("平均人脸形状:", overall_mean.shape)
                 self.show_info("特征脸形状:", eigenfaces.shape)
                 self.show_info("权重矩阵形状:", weight_matrix.shape)
@@ -196,7 +196,7 @@ class Window(QMainWindow):
                         right_times += 1
                     else:
                         wrong_times += 1
-                rate = right_times / (right_times + wrong_times)
+                rate = right_times / test_data.shape[0]
 
             elif method == "MLDA":
                 # 调用 MLDA 函数并接收返回的中间变量信息
@@ -220,7 +220,7 @@ class Window(QMainWindow):
                                 right_times += 1         
                     else:
                         wrong_times += 1
-                rate = right_times / (right_times + wrong_times)
+                rate = right_times / test_data.shape[0]
 
             elif method == "PCA":
                 # 调用 PCA 函数并接收返回的中间变量信息
@@ -241,7 +241,7 @@ class Window(QMainWindow):
                         right_times += 1
                     else:
                         wrong_times += 1
-                rate = right_times / (right_times + wrong_times)
+                rate = right_times / test_data.shape[0]
 
             end_time = time.time()  # 记录结束时间
             execution_time = end_time - start_time  # 计算执行时间
