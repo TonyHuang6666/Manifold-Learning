@@ -92,11 +92,25 @@ def construct_weight_matrix(Data, method, k, t):
     Weight_matrix[j_indices, i_indices] = similarity_matrix[i_indices, j_indices]  # 对称矩阵
     # 计算全局相似度并修正
     Weight_matrix += np.exp(-distances ** 2 / t)
-    return Weight_matrix   
+    return Weight_matrix
+
+def Best_weight_matrix(Data, k, t, weight_knn, weight_epsilon):
+    n = len(Data)
+    best_weight_matrix = np.zeros((n, n))
+    # 计算k最近邻矩阵的权重矩阵和 epsilon 邻域矩阵
+    knn_weight_matrix = construct_weight_matrix(Data, 'knn', k, t)
+    epsilon_weight_matrix = construct_weight_matrix(Data, 'epsilon', k, t)
+    
+    # 加权平均计算
+    best_weight_matrix = weight_knn * knn_weight_matrix + weight_epsilon * epsilon_weight_matrix
+    return best_weight_matrix   
 
 def LPP(Data, d, method, k, t):
     # Step 1: 计算权重矩阵
-    Weight_matrix = construct_weight_matrix(Data, method, k, t)
+    if method == "knn" or method == "epsilon":
+        Weight_matrix = construct_weight_matrix(Data, method, k, t)
+    elif method == "combined":
+        Weight_matrix = Best_weight_matrix(Data, k, t, 0.7, 0.3)
     # Step 2: 计算度矩阵和拉普拉斯矩阵
     Degree_matrix = np.diag(np.sum(Weight_matrix, axis=1))
     Laplacian_matrix = Degree_matrix - Weight_matrix

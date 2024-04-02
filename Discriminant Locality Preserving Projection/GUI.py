@@ -81,7 +81,15 @@ class Window(QMainWindow):
         self.lpp_method_combo = QComboBox()
         self.lpp_method_combo.addItem("knn")
         self.lpp_method_combo.addItem("epsilon")
+        self.lpp_method_combo.addItem("combined")
         self.main_layout.addWidget(self.lpp_method_combo)
+
+        # 添加运行次数输入框
+        self.runs_label = QLabel("请输入运行次数:")
+        self.main_layout.addWidget(self.runs_label)
+        self.runs_input = QLineEdit()
+        self.runs_input.setText("1")  # 默认值为1
+        self.main_layout.addWidget(self.runs_input)
 
         self.execute_button = QPushButton("执行程序")
         self.execute_button.clicked.connect(self.execute_algorithm)
@@ -138,116 +146,131 @@ class Window(QMainWindow):
             else:
                 percentage = int(target_size_str[:-1]) / 100.0
                 target_size = (int(faceshape_temp[0] * percentage), int(faceshape_temp[1] * percentage))  # 使用 faceshape 确定原始尺寸
-            
-            start_time = time.time()  # 记录开始时间
+            runs = int(self.runs_input.text())  # 获取运行次数
+
+            accuracies = []  # 用于存储每次运行的准确率
 
             # 更改按钮文本为“程序执行中”
             self.execute_button.setText("程序执行中，请勿操作！")
             QApplication.processEvents()  # 强制刷新界面，立即显示按钮文本变更
 
-            data, labels, faceshape = read_images(self.dataset_path, target_size=target_size)
-            train_data, train_labels, test_data, test_labels = train_test_split(data, labels, train_test_split_ratio=train_test_split_ratio)
-            if method == "DLPP":
-                # 调用 DLPP.py 文件中的相关函数，并获取其输出信息
-                overall_mean = np.mean(train_data, axis=0).reshape(-1, 1) # 计算训练集的整体均值脸
-                # 调用 DLPP 函数并接收返回的中间变量信息
-                F, L, B, objective_value, eigenfaces = DLPP(train_data, train_labels, d, lpp_method, k, t)
-                weight_matrix = np.dot(eigenfaces.T, train_data.T- overall_mean)
+            start_time = time.time()  # 记录开始时间
 
-                # 将信息显示在文本编辑框中
-                self.info_textedit.clear()
-                self.show_info("训练数据集形状:", train_data.T.shape)
-                self.show_info("平均人脸形状:", overall_mean.shape)
-                self.show_info("类平均脸形状:", F.shape)
-                self.show_info("拉普拉斯矩阵形状:", L.shape)
-                self.show_info("类权重矩阵形状:", B.shape)
-                self.show_info("目标函数形状:", objective_value.shape)
-                self.show_info("特征脸形状:", eigenfaces.shape)
-                self.show_info("权重矩阵形状:", weight_matrix.shape)
-                # 识别率统计
-                wrong_times = 0
-                right_times = 0
-                for i in range(test_data.shape[0]):
-                    flag = test_image(i, faceshape, overall_mean, train_labels, train_data, test_labels, test_data[i], eigenfaces, weight_matrix)
-                    if flag:
-                        right_times += 1
-                    else:
-                        wrong_times += 1
-                rate = right_times / test_data.shape[0]
+            for _ in range(runs):
+                data, labels, faceshape = read_images(self.dataset_path, target_size=target_size)
+                train_data, train_labels, test_data, test_labels = train_test_split(data, labels, train_test_split_ratio=train_test_split_ratio)
+                if method == "DLPP":
+                    # 调用 DLPP.py 文件中的相关函数，并获取其输出信息
+                    overall_mean = np.mean(train_data, axis=0).reshape(-1, 1) # 计算训练集的整体均值脸
+                    # 调用 DLPP 函数并接收返回的中间变量信息
+                    F, L, B, objective_value, eigenfaces = DLPP(train_data, train_labels, d, lpp_method, k, t)
+                    weight_matrix = np.dot(eigenfaces.T, train_data.T- overall_mean)
 
-            elif method == "LPP":
-                # 调用 LPP 函数并接收返回的中间变量信息
-                train_data = train_data.T
-                eigenfaces = LPP(train_data, d, lpp_method, k, t)
-                overall_mean = np.mean(train_data , axis=1).reshape(-1, 1)
-                weight_matrix = eigenfaces.T @ (train_data-overall_mean) 
-                # 将信息显示在文本编辑框中
-                self.info_textedit.clear()
-                self.show_info("训练数据集形状:", train_data.shape)
-                self.show_info("平均人脸形状:", overall_mean.shape)
-                self.show_info("特征脸形状:", eigenfaces.shape)
-                self.show_info("权重矩阵形状:", weight_matrix.shape)
-                # 识别率统计
-                wrong_times = 0
-                right_times = 0
-                for i in range(test_data.shape[0]):
-                    flag = test_image(i, faceshape, overall_mean, train_labels, train_data, test_labels, test_data[i], eigenfaces, weight_matrix)
-                    if flag:
-                        right_times += 1
-                    else:
-                        wrong_times += 1
-                rate = right_times / test_data.shape[0]
+                    # 将最后一次运行的信息显示在文本编辑框中
+                    if _ == runs - 1:
+                        self.info_textedit.clear()
+                        self.show_info("训练数据集形状:", train_data.T.shape)
+                        self.show_info("平均人脸形状:", overall_mean.shape)
+                        self.show_info("类平均脸形状:", F.shape)
+                        self.show_info("拉普拉斯矩阵形状:", L.shape)
+                        self.show_info("类权重矩阵形状:", B.shape)
+                        self.show_info("目标函数形状:", objective_value.shape)
+                        self.show_info("特征脸形状:", eigenfaces.shape)
+                        self.show_info("权重矩阵形状:", weight_matrix.shape)
+                    # 识别率统计
+                    wrong_times = 0
+                    right_times = 0
+                    for i in range(test_data.shape[0]):
+                        flag = test_image(i, faceshape, overall_mean, train_labels, train_data, test_labels, test_data[i], eigenfaces, weight_matrix)
+                        if flag:
+                            right_times += 1
+                        else:
+                            wrong_times += 1
+                    rate = right_times / test_data.shape[0]
 
-            elif method == "MLDA":
-                # 调用 MLDA 函数并接收返回的中间变量信息
-                eigenfaces, overall_mean, classes_means, Z, Sb, Sw, W_value = MLDA(train_data, train_labels, faceshape, d)
-                # 将信息显示在文本编辑框中
-                self.info_textedit.clear()
-                self.show_info("训练数据集形状:", train_data.T.shape)
-                self.show_info("平均人脸形状:", overall_mean.shape)
-                self.show_info("类均值形状:", classes_means.shape)
-                self.show_info("Z形状:", Z.shape)
-                self.show_info("类间散度矩阵形状:", Sb.shape)
-                self.show_info("类内散度矩阵形状:", Sw.shape)
-                self.show_info("投影矩阵形状:", W_value.shape)
-                self.show_info("特征脸形状:", eigenfaces.shape)
-                # 识别率统计
-                wrong_times = 0
-                right_times = 0
-                for i in range(test_data.shape[0]):
-                    flag = test_query_class_sample(eigenfaces, test_data[i], i, overall_mean, train_data, train_labels, test_labels)
-                    if flag:
-                                right_times += 1         
-                    else:
-                        wrong_times += 1
-                rate = right_times / test_data.shape[0]
+                elif method == "LPP":
+                    # 调用 LPP 函数并接收返回的中间变量信息
+                    train_data = train_data.T
+                    eigenfaces = LPP(train_data, d, lpp_method, k, t)
+                    overall_mean = np.mean(train_data , axis=1).reshape(-1, 1)
+                    weight_matrix = eigenfaces.T @ (train_data-overall_mean) 
+                    # 将最后一次运行的信息显示在文本编辑框中
+                    if _ == runs - 1:
+                        # 将信息显示在文本编辑框中
+                        self.info_textedit.clear()
+                        self.show_info("训练数据集形状:", train_data.shape)
+                        self.show_info("平均人脸形状:", overall_mean.shape)
+                        self.show_info("特征脸形状:", eigenfaces.shape)
+                        self.show_info("权重矩阵形状:", weight_matrix.shape)
+                    # 识别率统计
+                    wrong_times = 0
+                    right_times = 0
+                    for i in range(test_data.shape[0]):
+                        flag = test_image(i, faceshape, overall_mean, train_labels, train_data, test_labels, test_data[i], eigenfaces, weight_matrix)
+                        if flag:
+                            right_times += 1
+                        else:
+                            wrong_times += 1
+                    rate = right_times / test_data.shape[0]
 
-            elif method == "PCA":
-                # 调用 PCA 函数并接收返回的中间变量信息
-                eigenfaces, overall_mean = PCA(train_data, d)
-                weight_matrix = eigenfaces.T @ (train_data - overall_mean).T
-                # 将信息显示在文本编辑框中
-                self.info_textedit.clear()
-                self.show_info("训练数据集形状:", train_data.T.shape)
-                self.show_info("平均人脸形状:", overall_mean.shape)
-                self.show_info("特征脸形状:", eigenfaces.shape)
-                self.show_info("权重矩阵形状:", weight_matrix.shape)
-                # 识别率统计
-                wrong_times = 0
-                right_times = 0
-                for i in range(test_data.shape[0]):
-                    flag = test_image(i, faceshape, overall_mean, train_labels, train_data, test_labels, test_data[i], eigenfaces, weight_matrix)
-                    if flag:
-                        right_times += 1
-                    else:
-                        wrong_times += 1
-                rate = right_times / test_data.shape[0]
+                elif method == "MLDA":
+                    # 调用 MLDA 函数并接收返回的中间变量信息
+                    eigenfaces, overall_mean, classes_means, Z, Sb, Sw, W_value = MLDA(train_data, train_labels, faceshape, d)
+                    # 将最后一次运行的信息显示在文本编辑框中
+                    if _ == runs - 1:
+                        # 将信息显示在文本编辑框中
+                        self.info_textedit.clear()
+                        self.show_info("训练数据集形状:", train_data.T.shape)
+                        self.show_info("平均人脸形状:", overall_mean.shape)
+                        self.show_info("类均值形状:", classes_means.shape)
+                        self.show_info("Z形状:", Z.shape)
+                        self.show_info("类间散度矩阵形状:", Sb.shape)
+                        self.show_info("类内散度矩阵形状:", Sw.shape)
+                        self.show_info("投影矩阵形状:", W_value.shape)
+                        self.show_info("特征脸形状:", eigenfaces.shape)
+                    # 识别率统计
+                    wrong_times = 0
+                    right_times = 0
+                    for i in range(test_data.shape[0]):
+                        flag = test_query_class_sample(eigenfaces, test_data[i], i, overall_mean, train_data, train_labels, test_labels)
+                        if flag:
+                                    right_times += 1         
+                        else:
+                            wrong_times += 1
+                    rate = right_times / test_data.shape[0]
+
+                elif method == "PCA":
+                    # 调用 PCA 函数并接收返回的中间变量信息
+                    eigenfaces, overall_mean = PCA(train_data, d)
+                    weight_matrix = eigenfaces.T @ (train_data - overall_mean).T
+                    # 将最后一次运行的信息显示在文本编辑框中
+                    if _ == runs - 1:
+                        # 将信息显示在文本编辑框中
+                        self.info_textedit.clear()
+                        self.show_info("训练数据集形状:", train_data.T.shape)
+                        self.show_info("平均人脸形状:", overall_mean.shape)
+                        self.show_info("特征脸形状:", eigenfaces.shape)
+                        self.show_info("权重矩阵形状:", weight_matrix.shape)
+                    # 识别率统计
+                    wrong_times = 0
+                    right_times = 0
+                    for i in range(test_data.shape[0]):
+                        flag = test_image(i, faceshape, overall_mean, train_labels, train_data, test_labels, test_data[i], eigenfaces, weight_matrix)
+                        if flag:
+                            right_times += 1
+                        else:
+                            wrong_times += 1
+                    rate = right_times / test_data.shape[0]
+
+                accuracies.append(rate)  # 记录准确率
+
+            average_accuracy = np.mean(accuracies)  # 计算平均准确率
 
             end_time = time.time()  # 记录结束时间
             execution_time = end_time - start_time  # 计算执行时间
 
             # 更新信息显示
-            self.info_label.setText(f"图像识别正确率: {rate}\n程序运行时间: {execution_time:.2f} 秒")
+            self.info_label.setText(f"平均图像识别正确率: {average_accuracy}\n程序运行时间: {execution_time:.2f} 秒")
 
             # 显示特征脸图像
             self.show_eigenfaces(eigenfaces, faceshape)
