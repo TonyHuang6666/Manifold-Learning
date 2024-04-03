@@ -43,6 +43,14 @@ def compute_k_maximun_radius(n, distances, k):
         radius[i] = sorted_distances[i, k]
     return radius
 
+# 以将距离从小到大排序后前k个距离的平均值作为每个数据点的半径(效果还行)
+"""
+参数接近KNN
+"""
+def compute_knn_average_radius(distances, k):
+    sorted_distances = np.sort(distances, axis=1)  # 对距离矩阵的每一行进行排序
+    avg_knn_distances = np.mean(sorted_distances[:, 1:k+1], axis=1)  # 计算每个数据点的前k个距离的平均值作为半径
+    return avg_knn_distances
 
 def knn_graph(Data, method, k):
     # 获取样本点的数量
@@ -70,7 +78,7 @@ def compute_neighborhood_matrix(Data, method, k):
         return knn_adjacency_matrix, distances
     elif method == 'epsilon':
         adjacency_matrix = np.zeros((n, n))
-        radius = compute_avg_radius(n, distances)  # 计算每个数据点的邻域半径
+        radius = compute_knn_average_radius(distances, k)  # 计算每个数据点的邻域半径
         for i in range(n):  # 对于数据集中的每个样本点 i
             neighbors = np.where(distances[i] <= radius[i])[0]  # 获取epsilon邻域内的样本索引
             adjacency_matrix[i, neighbors] = 1
@@ -110,7 +118,7 @@ def LPP(Data, d, method, k, t):
     if method == "knn" or method == "epsilon":
         Weight_matrix = construct_weight_matrix(Data, method, k, t)
     elif method == "combined":
-        Weight_matrix = Best_weight_matrix(Data, k, t, 0.7, 0.3)
+        Weight_matrix = Best_weight_matrix(Data, k, t, 0.5, 0.5)
     # Step 2: 计算度矩阵和拉普拉斯矩阵
     Degree_matrix = np.diag(np.sum(Weight_matrix, axis=1))
     Laplacian_matrix = Degree_matrix - Weight_matrix
