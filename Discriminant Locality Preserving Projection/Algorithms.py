@@ -211,6 +211,8 @@ def DLPP_LPP(train_data, train_labels, method, d, k, t):
         Degree_matrix = np.diag(np.sum(Weight_matrix, axis=1))  # 计算当前类别的度矩阵
         # 将Degree_matrix和Weight_matrix计算矩阵的迹并添加到对角线
         class_idx = class_label - 1
+        #Weight_matrices[class_idx, class_idx] = np.sum(Weight_matrix)
+        #Degree_matrices[class_idx, class_idx] = np.sum(Degree_matrix)
         Weight_matrices[class_idx, class_idx] = np.trace(Weight_matrix)
         Degree_matrices[class_idx, class_idx] = np.trace(Degree_matrix)
     Laplacian_matrices = Degree_matrices - Weight_matrices
