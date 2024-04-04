@@ -25,109 +25,64 @@ def PCA(X, n_components):
     return principal_components, mean
 
 ###############################LPP算法函数######################################
-
-# 以每个点到其他所有点的平均值作为每个数据点的平均邻域半径
-def compute_avg_radius(n, distances): 
-    radius = np.zeros(n) # 存储每个数据点的平均邻域半径
-    for i in range(n): # 计算每个数据点的平均邻域半径
-        avg_radius = np.mean(distances[i]) # 每个数据点到其他所有点的平均值
-        radius[i] = avg_radius # 存储每个数据点的平均邻域半径
-    return radius
-
-# 以将距离从小到大排序后的第k个距离作为每个数据点的半径
-def compute_k_maximun_radius(n, distances, k):
-    radius = np.zeros(n)
-    sorted_distances = np.sort(distances, axis=1)  # 对距离矩阵的每一行进行排序
-    for i in range(n):
-        # 选取第k个距离作为半径
-        radius[i] = sorted_distances[i, k]
-    return radius
-
-# 以将距离从小到大排序后前k个距离的平均值作为每个数据点的半径(效果还行)
-"""
-参数接近KNN
-"""
-def compute_knn_average_radius(distances, k):
-    sorted_distances = np.sort(distances, axis=1)  # 对距离矩阵的每一行进行排序
-    avg_knn_distances = np.mean(sorted_distances[:, 1:k+1], axis=1)  # 计算每个数据点的前k个距离的平均值作为半径
-    return avg_knn_distances
-
 def knn_graph(Data, method, k):
-    # 获取样本点的数量
-    n = Data.shape[0]
-    # 初始化k近邻图的邻接矩阵
+    n = Data.shape[1]  # 修改此处获取样本点的数量
     knn_adjacency_matrix = np.zeros((n, n))  
-    # 计算欧式距离矩阵
-    distances = np.sqrt(np.sum((Data[:, None] - Data) ** 2, axis=2))
+    distances = np.sqrt(np.sum((Data.T[:, :, None] - Data.T[:, :, None].T) ** 2, axis=1)) # 修改计算欧式距离矩阵的方式
     if method == 'epsilon':
         return knn_adjacency_matrix, distances
-    # 获取每个样本点的最近邻索引
     indices = np.argsort(distances, axis=1)[:, 1:k+1]
-    # 构建k近邻图的权重矩阵
-    # 遍历每个样本点的最近邻索引
     for i in range(n):
         knn_adjacency_matrix[i, indices[i]] = 1
         knn_adjacency_matrix[indices[i], i] = 1
     return knn_adjacency_matrix, distances
 
-# 计算k最近邻接矩阵或epsilon邻接矩阵
+def compute_avg_radius(n, distances): 
+    radius = np.zeros(n)
+    for i in range(n):
+        avg_radius = np.mean(distances[:, i])  # 修改计算每个数据点的平均邻域半径的方式
+        radius[i] = avg_radius
+    return radius
+
+def compute_knn_average_radius(distances, k):
+    sorted_distances = np.sort(distances, axis=1)  # 对距离矩阵的每一行进行排序
+    avg_knn_distances = np.mean(sorted_distances[:, 1:k+1], axis=1)  # 计算每个数据点的前k个距离的平均值作为半径
+    return avg_knn_distances
+
 def compute_neighborhood_matrix(Data, method, k):
-    n = len(Data)
+    n = Data.shape[1]  # 修改获取样本点的数量的方式
     knn_adjacency_matrix, distances = knn_graph(Data, method, k)
     if method == 'knn':
         return knn_adjacency_matrix, distances
-    elif method == 'epsilon':
-        adjacency_matrix = np.zeros((n, n))
-        radius = compute_knn_average_radius(distances, k)  # 计算每个数据点的邻域半径
-        for i in range(n):  # 对于数据集中的每个样本点 i
-            neighbors = np.where(distances[i] <= radius[i])[0]  # 获取epsilon邻域内的样本索引
-            adjacency_matrix[i, neighbors] = 1
-            adjacency_matrix[neighbors, i] = 1
-        return adjacency_matrix, distances
+    adjacency_matrix = np.zeros((n, n))
+    radius = compute_knn_average_radius(distances, k)
+    for i in range(n):
+        neighbors = np.where(distances[:, i] <= radius[i])[0]  # 修改获取epsilon邻域内的样本索引的方式
+        adjacency_matrix[i, neighbors] = 1
+        adjacency_matrix[neighbors, i] = 1
+    return adjacency_matrix, distances
 
-
-# 构建基于热核方法的权重矩阵
 def construct_weight_matrix(Data, method, k, t):
-    n = len(Data)
+    n = Data.shape[1]  # 修改获取样本点的数量的方式
     Weight_matrix = np.zeros((n, n))
     adjacency_matrix, distances = compute_neighborhood_matrix(Data, method, k)
-    # 计算相似度矩阵
     similarity_matrix = np.exp(-distances ** 2 / t)
-    # 将相似度矩阵按照邻接矩阵进行筛选，得到需要设置权重的位置
     i_indices, j_indices = np.where(adjacency_matrix == 1)
-    # 设置权重
     Weight_matrix[i_indices, j_indices] = similarity_matrix[i_indices, j_indices]
-    Weight_matrix[j_indices, i_indices] = similarity_matrix[i_indices, j_indices]  # 对称矩阵
-    # 计算全局相似度并修正
+    Weight_matrix[j_indices, i_indices] = similarity_matrix[i_indices, j_indices]
     Weight_matrix += np.exp(-distances ** 2 / t)
     return Weight_matrix
 
-def Best_weight_matrix(Data, k, t, weight_knn, weight_epsilon):
-    n = len(Data)
-    best_weight_matrix = np.zeros((n, n))
-    # 计算k最近邻矩阵的权重矩阵和 epsilon 邻域矩阵
-    knn_weight_matrix = construct_weight_matrix(Data, 'knn', k, t)
-    epsilon_weight_matrix = construct_weight_matrix(Data, 'epsilon', k, t)
-    
-    # 加权平均计算
-    best_weight_matrix = weight_knn * knn_weight_matrix + weight_epsilon * epsilon_weight_matrix
-    return best_weight_matrix   
-
 def LPP(Data, d, method, k, t):
-    # Step 1: 计算权重矩阵
-    if method == "knn" or method == "epsilon":
-        Weight_matrix = construct_weight_matrix(Data, method, k, t)
-    elif method == "combined":
-        Weight_matrix = Best_weight_matrix(Data, k, t, 0.5, 0.5)
-    # Step 2: 计算度矩阵和拉普拉斯矩阵
+    Weight_matrix = construct_weight_matrix(Data, method, k, t)
     Degree_matrix = np.diag(np.sum(Weight_matrix, axis=1))
     Laplacian_matrix = Degree_matrix - Weight_matrix
-    # Step 3: 进行特征映射
-    eigenvalues, eigenvectors = eigs(Laplacian_matrix, k=d+1, which='SR')
+    objective_value = np.dot(np.dot(Data, Laplacian_matrix), Data.T)  # 计算目标函数
+    eigenvalues, eigenvectors = eigs(objective_value, k=d+1)
     sorted_indices = np.argsort(eigenvalues.real)
     selected_indices = sorted_indices[1:d + 1]
     selected_eigenvectors = eigenvectors.real[:, selected_indices]
-    return selected_eigenvectors        
+    return selected_eigenvectors    
     
 ###############################LPP算法函数######################################
 
@@ -201,22 +156,10 @@ def MLDA(train_data, train_labels, faceshape, d):
 # 计算每个类别的权重矩阵，度矩阵和拉普拉斯矩阵
 def DLPP_LPP(train_data, train_labels, method, d, k, t):
     Data = train_data.T
-    n = len(train_labels)
-    Weight_matrices = np.zeros((n, n)) # 存储每个类别的权重矩阵
-    Degree_matrices = np.zeros((n, n)) # 存储每个类别的度矩阵
-    for class_label in np.unique(train_labels):
-        class_indices = np.where(train_labels == class_label)[0]  # 获取当前类别的样本索引
-        class_train_data = Data[:, class_indices]  # 获取当前类别的样本数据
-        Weight_matrix = construct_weight_matrix(class_train_data, method, k, t)  # 计算当前类别的权重矩阵
-        Degree_matrix = np.diag(np.sum(Weight_matrix, axis=1))  # 计算当前类别的度矩阵
-        # 将Degree_matrix和Weight_matrix计算矩阵的迹并添加到对角线
-        class_idx = class_label - 1
-        #Weight_matrices[class_idx, class_idx] = np.sum(Weight_matrix)
-        #Degree_matrices[class_idx, class_idx] = np.sum(Degree_matrix)
-        Weight_matrices[class_idx, class_idx] = np.trace(Weight_matrix)
-        Degree_matrices[class_idx, class_idx] = np.trace(Degree_matrix)
-    Laplacian_matrices = Degree_matrices - Weight_matrices
-    return Laplacian_matrices, Data
+    Weight_matrix = construct_weight_matrix(Data, method, k, t)
+    Degree_matrix = np.diag(np.sum(Weight_matrix, axis=1))
+    Laplacian_matrix = Degree_matrix - Weight_matrix
+    return Laplacian_matrix, Data
 
 # 计算每个类别的均值矩阵
 def DLPP_MLDA(train_data, train_labels, d):
@@ -248,7 +191,7 @@ def DLPP(train_data, train_labels, d, lpp_method, k, t):
     # Step 6: 分式
     objective_value = numerator / denominator
     # Step 7: 求解广义特征值问题的特征值和特征向量
-    eigenvalues, eigenvectors = eigs(objective_value, k=d+1, which='SR')
+    eigenvalues, eigenvectors = eigs(objective_value, k=d+1)
     sorted_indices = np.argsort(eigenvalues.real)
     selected_indices = sorted_indices[1:d + 1]  
     selected_eigenvectors = eigenvectors.real[:, selected_indices] 

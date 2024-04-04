@@ -10,7 +10,7 @@ class Window(QMainWindow):
     def __init__(self):
         super().__init__()
 
-        self.setWindowTitle("DLPP LPP LDA 人脸特征提取与识别程序")
+        self.setWindowTitle("DLPP LPP LDA PCA 人脸特征提取与识别程序")
         self.setGeometry(0, 0, 1200, 1000)
         # 居中显示窗口
         self.center_on_screen()
@@ -24,7 +24,7 @@ class Window(QMainWindow):
         # 选择数据集路径
         self.dataset_label = QLabel("请选择数据集文件夹:")
         self.main_layout.addWidget(self.dataset_label)
-        self.default_dataset_path = "D:\OneDrive - email.szu.edu.cn\Manifold Learning\Discriminant Locality Preserving Projection\ORL"
+        self.default_dataset_path = "C:\\Users\Tony\\OneDrive - email.szu.edu.cn\\Manifold Learning\\Discriminant Locality Preserving Projection\\ORL"
         self.dataset_path_label = QLabel(f"数据集默认路径: {self.default_dataset_path}")  # 显示默认数据集文件夹的路径
         self.main_layout.addWidget(self.dataset_path_label)
         self.dataset_button = QPushButton("选择其他数据集")
@@ -67,7 +67,7 @@ class Window(QMainWindow):
         self.k_label = QLabel("请输入数据点最近邻数量k:")
         self.main_layout.addWidget(self.k_label)
         self.k_input = QLineEdit()
-        self.k_input.setText("100")  # 默认值为100
+        self.k_input.setText("5")  # 默认值为5
         self.main_layout.addWidget(self.k_input)
 
         self.t_label = QLabel("请输入热核参数t:")
