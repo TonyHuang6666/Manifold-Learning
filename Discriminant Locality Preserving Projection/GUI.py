@@ -37,7 +37,7 @@ class Window(QMainWindow):
         for ratio in range(5, 100, 5):
             ratio_decimal = ratio / 100.0
             self.train_test_split_combo.addItem("{:.2f}".format(ratio_decimal))
-        self.train_test_split_combo.setCurrentText("0.50")  # 设置初始值为当前选择
+        self.train_test_split_combo.setCurrentText("0.70")  # 设置初始值为当前选择
         self.main_layout.addWidget(self.train_test_split_combo)
 
         self.target_size_label = QLabel("请选择图像缩放百分比:")
@@ -45,7 +45,7 @@ class Window(QMainWindow):
         self.target_size_combo = QComboBox()
         for percentage in range(5, 105, 5):
             self.target_size_combo.addItem(f"{percentage}%")
-        self.target_size_combo.setCurrentText("20%")  # 设置初始值为20%,即长宽均为原来的20%且取整
+        self.target_size_combo.setCurrentText("30%")  # 设置初始值为20%,即长宽均为原来的20%且取整
         self.main_layout.addWidget(self.target_size_combo)
 
         self.d_label = QLabel("请输入降维后的维度d:")
