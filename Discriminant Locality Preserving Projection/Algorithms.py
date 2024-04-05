@@ -4,6 +4,7 @@ from os import listdir, path
 from cv2 import imread, resize, INTER_AREA, IMREAD_GRAYSCALE
 from scipy.linalg import eigh
 from scipy.sparse.linalg import eigs
+from scipy.interpolate import interp1d
 
 ###############################PCA算法函数######################################
 # PCA实现函数
@@ -26,22 +27,26 @@ def PCA(X, n_components):
 
 ###############################LPP算法函数######################################
 #####################计算自适应knn graph####################
-def compute_adaptive_k(Data, threshold):
-    n = Data.shape[1]  
+def compute_adaptive_k(Data):
+    n = Data.shape[1]  # 样本点的数量
     distances = np.sqrt(np.sum((Data.T[:, :, None] - Data.T[:, :, None].T) ** 2, axis=1)) 
     sorted_distances = np.sort(distances, axis=1)  # 对距离矩阵的每一行进行排序
-    # 找出sorted_distances每一行的前一列与后一列距离之差第一次小于阈值的位置并保存为一个列矩阵
     adaptive_k = np.zeros((n, 1))
+    # 对每行距离进行插值和求导
     for i in range(n):
-        for j in range(1, n-1):
-            if (sorted_distances[i, j+1] - sorted_distances[i, j])  < threshold:
-                adaptive_k[i] = j
-                break           
+        # 对距离进行插值，生成连续的函数
+        f = interp1d(np.arange(n), sorted_distances[i], kind='linear')
+        # 求导
+        df = np.gradient(f(np.arange(n)))  # 计算函数的导数
+        # 寻找导数为1的位置
+        idx = np.where(df <= 1)[0][0]
+        # 将索引保存为每个数据点的k值
+        adaptive_k[i] = idx
     return adaptive_k, sorted_distances, distances
 
 # 根据adaptive_k中每一行的k值和sorted_distances对每个数据点构建knn graph
-def adaptive_knn_graph(Data, threshold):
-    adaptive_k, sorted_distances, distances = compute_adaptive_k(Data, threshold)
+def adaptive_knn_graph(Data):
+    adaptive_k, sorted_distances, distances = compute_adaptive_k(Data)
     n = Data.shape[1]  
     knn_adjacency_matrix = np.zeros((n, n))  
     for i in range(n):
@@ -78,7 +83,7 @@ def compute_knn_average_radius(sorted_distances, k):
     return avg_knn_distances
 #####################计算epsilon graph####################
 
-def compute_neighborhood_matrix(Data, method, threshold, k):
+def compute_neighborhood_matrix(Data, method, k):
     n = Data.shape[1]  # 获取样本点的数量
     distances = np.zeros((n, n))
     sorted_distances = np.zeros((n, n))
@@ -87,7 +92,7 @@ def compute_neighborhood_matrix(Data, method, threshold, k):
         knn_adjacency_matrix, distances = knn_graph(Data, method, k)
         return knn_adjacency_matrix, distances
     elif method == 'adaptive_knn':
-        knn_adjacency_matrix, adaptive_k, sorted_distances, distances = adaptive_knn_graph(Data, threshold)
+        knn_adjacency_matrix, adaptive_k, sorted_distances, distances = adaptive_knn_graph(Data)
         return knn_adjacency_matrix, distances
     adjacency_matrix = np.zeros((n, n))
     radius = compute_knn_average_radius(sorted_distances, k)
@@ -97,10 +102,10 @@ def compute_neighborhood_matrix(Data, method, threshold, k):
         adjacency_matrix[neighbors, i] = 1
     return adjacency_matrix, distances
 
-def construct_weight_matrix(Data, method, threshold, k,t):
+def construct_weight_matrix(Data, method, k,t):
     n = Data.shape[1]  
     Weight_matrix = np.zeros((n, n))
-    adjacency_matrix, distances = compute_neighborhood_matrix(Data, method, threshold, k)
+    adjacency_matrix, distances = compute_neighborhood_matrix(Data, method, k)
     similarity_matrix = np.exp(-distances ** 2 / t)
     i_indices, j_indices = np.where(adjacency_matrix == 1)
     Weight_matrix[i_indices, j_indices] = similarity_matrix[i_indices, j_indices]
@@ -108,22 +113,22 @@ def construct_weight_matrix(Data, method, threshold, k,t):
     Weight_matrix += np.exp(-distances ** 2 / t)
     return Weight_matrix
 
-def Best_weight_matrix(Data, threshold, k, t, weight_knn, weight_epsilon):
+def Best_weight_matrix(Data, k, t, weight_knn, weight_epsilon):
     n = len(Data)
     best_weight_matrix = np.zeros((n, n))
     # 计算k最近邻矩阵的权重矩阵和 epsilon 邻域矩阵
-    knn_weight_matrix = construct_weight_matrix(Data, 'knn', threshold, k, t)
-    epsilon_weight_matrix = construct_weight_matrix(Data, 'epsilon', threshold, k, t)
+    knn_weight_matrix = construct_weight_matrix(Data, 'knn', k, t)
+    epsilon_weight_matrix = construct_weight_matrix(Data, 'epsilon', k, t)
     
     # 加权平均计算
     best_weight_matrix = weight_knn * knn_weight_matrix + weight_epsilon * epsilon_weight_matrix
     return best_weight_matrix
 
-def LPP(Data, d, method, threshold, k, t):
+def LPP(Data, d, method, k, t):
     if method == 'knn_epsilon':
-        Weight_matrix = Best_weight_matrix(Data, threshold, k, t, 0.5, 0.5)
+        Weight_matrix = Best_weight_matrix(Data, k, t, 0.5, 0.5)
     else:
-        Weight_matrix = construct_weight_matrix(Data, method, threshold, k, t)
+        Weight_matrix = construct_weight_matrix(Data, method, k, t)
     Degree_matrix = np.diag(np.sum(Weight_matrix, axis=1))
     Laplacian_matrix = Degree_matrix - Weight_matrix
     objective_value = np.dot(np.dot(Data, Laplacian_matrix), Data.T)  # 计算目标函数
@@ -293,11 +298,11 @@ def train_test_split(data, labels, train_test_split_ratio):
     return train_data, train_labels, test_data, test_labels
 
 # 测试DLPP, LPP, PCA要查询的图像
-def test_image(i, faceshape, overall_mean, train_labels, train_data, test_labels, query, dlpp_eigenfaces, dlpp_weight_matrix):
+def test_image(i,train_labels, test_labels, query, eigenfaces, weight_matrix):
     # 计算测试图像的权重向量
-    query_weight = (dlpp_eigenfaces.T @ (query - overall_mean.flatten()).reshape(-1, 1))
+    query_weight = (eigenfaces.T @ query.reshape(-1, 1))
     # 计算测试图像权重与数据集中每个人脸权重的欧氏距离
-    euclidean_distances = np.linalg.norm(dlpp_weight_matrix - query_weight, axis=0)
+    euclidean_distances = np.linalg.norm(weight_matrix - query_weight, axis=0)
     # 找到最佳匹配的人脸
     best_match_index = np.argmin(euclidean_distances)
     #判断是否匹配正确

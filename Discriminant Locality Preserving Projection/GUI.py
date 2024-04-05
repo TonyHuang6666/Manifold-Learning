@@ -75,12 +75,6 @@ class Window(QMainWindow):
         self.lpp_method_combo.currentIndexChanged.connect(self.toggle_parameters_visibility)  # 连接方法选择框的信号与槽函数
         self.main_layout.addWidget(self.lpp_method_combo)
 
-        self.adaptive_knn_label = QLabel("请输入自适应knn的欧氏距离差值阈值threshold:")
-        self.main_layout.addWidget(self.adaptive_knn_label)
-        self.adaptive_knn_input = QLineEdit()
-        self.adaptive_knn_input.setText("1")  # 默认值为1
-        self.main_layout.addWidget(self.adaptive_knn_input)
-
         self.k_label = QLabel("请输入数据点最近邻数量k:")
         self.main_layout.addWidget(self.k_label)
         self.k_input = QLineEdit()
@@ -147,7 +141,6 @@ class Window(QMainWindow):
             d = int(self.d_input.text())
             k = int(self.k_input.text())
             t = int(self.t_input.text())
-            threshold = float(self.adaptive_knn_input.text())
             method = self.method_combo.currentText()
             lpp_method = self.lpp_method_combo.currentText()
             train_test_split_ratio = float(self.train_test_split_combo.currentText())
@@ -174,8 +167,8 @@ class Window(QMainWindow):
                     # 调用 DLPP.py 文件中的相关函数，并获取其输出信息
                     overall_mean = np.mean(train_data, axis=0).reshape(-1, 1) # 计算训练集的整体均值脸
                     # 调用 DLPP 函数并接收返回的中间变量信息
-                    F, L, B, objective_value, eigenfaces = DLPP(train_data, train_labels, d, lpp_method, threshold, k, t)
-                    weight_matrix = np.dot(eigenfaces.T, train_data.T- overall_mean)
+                    F, L, B, objective_value, eigenfaces = DLPP(train_data, train_labels, d, lpp_method,k, t)
+                    weight_matrix = np.dot(eigenfaces.T, train_data.T)
 
                     # 将最后一次运行的信息显示在文本编辑框中
                     if _ == runs - 1:
@@ -192,7 +185,7 @@ class Window(QMainWindow):
                     wrong_times = 0
                     right_times = 0
                     for i in range(test_data.shape[0]):
-                        flag = test_image(i, faceshape, overall_mean, train_labels, train_data, test_labels, test_data[i], eigenfaces, weight_matrix)
+                        flag = test_image(i, train_labels, test_labels, test_data[i], eigenfaces, weight_matrix)
                         if flag:
                             right_times += 1
                         else:
@@ -202,9 +195,9 @@ class Window(QMainWindow):
                 elif method == "LPP":
                     # 调用 LPP 函数并接收返回的中间变量信息
                     train_data = train_data.T
-                    eigenfaces = LPP(train_data, d, lpp_method, threshold, k, t)
+                    eigenfaces = LPP(train_data, d, lpp_method, k, t)
                     overall_mean = np.mean(train_data , axis=1).reshape(-1, 1)
-                    weight_matrix = eigenfaces.T @ (train_data-overall_mean) 
+                    weight_matrix = eigenfaces.T @ train_data
                     # 将最后一次运行的信息显示在文本编辑框中
                     if _ == runs - 1:
                         # 将信息显示在文本编辑框中
@@ -217,7 +210,7 @@ class Window(QMainWindow):
                     wrong_times = 0
                     right_times = 0
                     for i in range(test_data.shape[0]):
-                        flag = test_image(i, faceshape, overall_mean, train_labels, train_data, test_labels, test_data[i], eigenfaces, weight_matrix)
+                        flag = test_image(i, train_labels, test_labels, test_data[i], eigenfaces, weight_matrix)
                         if flag:
                             right_times += 1
                         else:
@@ -253,7 +246,7 @@ class Window(QMainWindow):
                 elif method == "PCA":
                     # 调用 PCA 函数并接收返回的中间变量信息
                     eigenfaces, overall_mean = PCA(train_data, d)
-                    weight_matrix = eigenfaces.T @ (train_data - overall_mean).T
+                    weight_matrix = eigenfaces.T @ train_data.T
                     # 将最后一次运行的信息显示在文本编辑框中
                     if _ == runs - 1:
                         # 将信息显示在文本编辑框中
@@ -266,7 +259,7 @@ class Window(QMainWindow):
                     wrong_times = 0
                     right_times = 0
                     for i in range(test_data.shape[0]):
-                        flag = test_image(i, faceshape, overall_mean, train_labels, train_data, test_labels, test_data[i], eigenfaces, weight_matrix)
+                        flag = test_image(i, train_labels, test_labels, test_data[i], eigenfaces, weight_matrix)
                         if flag:
                             right_times += 1
                         else:
@@ -332,17 +325,11 @@ class Window(QMainWindow):
             self.d_input.setVisible(True)
             self.lpp_method_label.setVisible(False)
             self.lpp_method_combo.setVisible(False)
-            self.adaptive_knn_label.setVisible(False)
-            self.adaptive_knn_input.setVisible(False)
         elif selected_method == "LPP": 
             if selected_lpp_method == "adaptive_knn":
-                self.adaptive_knn_label.setVisible(True)
-                self.adaptive_knn_input.setVisible(True)
                 self.k_label.setVisible(False)
                 self.k_input.setVisible(False)
             else:
-                self.adaptive_knn_label.setVisible(False)
-                self.adaptive_knn_input.setVisible(False)
                 self.k_label.setVisible(True)
                 self.k_input.setVisible(True)
             self.t_label.setVisible(True)
@@ -353,13 +340,9 @@ class Window(QMainWindow):
             self.lpp_method_combo.setVisible(True)
         elif selected_method == "DLPP":
             if selected_lpp_method == "adaptive_knn":
-                self.adaptive_knn_label.setVisible(True)
-                self.adaptive_knn_input.setVisible(True)
                 self.k_label.setVisible(False)
                 self.k_input.setVisible(False)
             else:
-                self.adaptive_knn_label.setVisible(False)
-                self.adaptive_knn_input.setVisible(False) 
                 self.k_label.setVisible(True)
                 self.k_input.setVisible(True)
             self.t_label.setVisible(True)
@@ -377,8 +360,6 @@ class Window(QMainWindow):
             self.d_input.setVisible(True)
             self.lpp_method_label.setVisible(False)
             self.lpp_method_combo.setVisible(False)
-            self.adaptive_knn_label.setVisible(False)
-            self.adaptive_knn_input.setVisible(False)
         else:
             raise ValueError(f"未知方法: {selected_method}")
 
