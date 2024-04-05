@@ -1,7 +1,6 @@
-import sys
 import time
-import numpy as np
-import matplotlib.pyplot as plt
+from sys import argv, exit
+from matplotlib import pyplot as plt
 from PyQt5.QtWidgets import QApplication, QMainWindow, QLabel, QVBoxLayout, QWidget, QPushButton, QFileDialog, QLineEdit, QComboBox, QTextEdit, QMessageBox, QDesktopWidget
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from Algorithms import *
@@ -12,16 +11,13 @@ class Window(QMainWindow):
 
         self.setWindowTitle("DLPP LPP LDA PCA 人脸特征提取与识别程序")
         self.setGeometry(0, 0, 1200, 1300)
-        # 居中显示窗口
         self.center_on_screen()
-
         self.central_widget = QWidget()
         self.setCentralWidget(self.central_widget)
-
         self.main_layout = QVBoxLayout()
         self.central_widget.setLayout(self.main_layout)
 
-        # 选择数据集路径
+        # 数据集的选择与划分
         self.dataset_label = QLabel("请选择数据集文件夹:")
         self.main_layout.addWidget(self.dataset_label)
         self.default_dataset_path = "C:\\Users\Tony\\OneDrive - email.szu.edu.cn\\Manifold Learning\\Discriminant Locality Preserving Projection\\ORL"
@@ -30,30 +26,32 @@ class Window(QMainWindow):
         self.dataset_button = QPushButton("选择其他数据集")
         self.dataset_button.clicked.connect(self.select_dataset)
         self.main_layout.addWidget(self.dataset_button)
-
         self.train_test_split_label = QLabel("请选择训练集划分比例:")
         self.main_layout.addWidget(self.train_test_split_label)
         self.train_test_split_combo = QComboBox()
         for ratio in range(5, 100, 5):
             ratio_decimal = ratio / 100.0
             self.train_test_split_combo.addItem("{:.2f}".format(ratio_decimal))
-        self.train_test_split_combo.setCurrentText("0.70")  # 设置初始值为当前选择
+        self.train_test_split_combo.setCurrentText("0.70")
         self.main_layout.addWidget(self.train_test_split_combo)
 
+        # 选择图像缩放百分比
         self.target_size_label = QLabel("请选择图像缩放百分比:")
         self.main_layout.addWidget(self.target_size_label)
         self.target_size_combo = QComboBox()
         for percentage in range(5, 105, 5):
             self.target_size_combo.addItem(f"{percentage}%")
-        self.target_size_combo.setCurrentText("35%")  # 设置初始值为20%,即长宽均为原来的20%且取整
+        self.target_size_combo.setCurrentText("35%")  # 设置初始值为x%,即长宽均为原来的x%且取整
         self.main_layout.addWidget(self.target_size_combo)
 
+        # 输入降维后的维度
         self.d_label = QLabel("请输入降维后的维度d:")
         self.main_layout.addWidget(self.d_label)
         self.d_input = QLineEdit()
         self.d_input.setText("70")  # 默认值为70
         self.main_layout.addWidget(self.d_input)
 
+        # 选择降维方法
         self.method_label = QLabel("请选择数据降维方法:")
         self.main_layout.addWidget(self.method_label)
         self.method_combo = QComboBox()
@@ -64,6 +62,7 @@ class Window(QMainWindow):
         self.method_combo.currentIndexChanged.connect(self.toggle_parameters_visibility)  # 连接方法选择框的信号与槽函数
         self.main_layout.addWidget(self.method_combo)
 
+        # 选择LPP方法
         self.lpp_method_label = QLabel("请选择邻域选择方法:")
         self.main_layout.addWidget(self.lpp_method_label)
         self.lpp_method_combo = QComboBox()
@@ -93,17 +92,19 @@ class Window(QMainWindow):
         self.t_input.setText("100000")  # 默认值为100000
         self.main_layout.addWidget(self.t_input)
 
-        # 添加运行次数输入框
+        # 输入运行次数
         self.runs_label = QLabel("请输入运行次数:")
         self.main_layout.addWidget(self.runs_label)
         self.runs_input = QLineEdit()
         self.runs_input.setText("1")  # 默认值为1
         self.main_layout.addWidget(self.runs_input)
 
+        # 执行程序按钮
         self.execute_button = QPushButton("执行程序")
         self.execute_button.clicked.connect(self.execute_algorithm)
         self.main_layout.addWidget(self.execute_button)
 
+        # 信息显示框
         self.info_label = QLabel("程序信息显示:")
         self.main_layout.addWidget(self.info_label)
 
@@ -381,7 +382,7 @@ class Window(QMainWindow):
             raise ValueError(f"未知方法: {selected_method}")
 
 if __name__ == "__main__":
-    app = QApplication(sys.argv)
+    app = QApplication(argv)
     window = Window()
     window.show()
-    sys.exit(app.exec_())
+    exit(app.exec_())

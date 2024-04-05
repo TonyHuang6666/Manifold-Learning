@@ -1,8 +1,8 @@
 # 导入库函数
-import os
-import cv2
 import numpy as np
-import scipy
+from os import listdir, path
+from cv2 import imread, resize, INTER_AREA, IMREAD_GRAYSCALE
+from scipy.linalg import eigh
 from scipy.sparse.linalg import eigs
 
 ###############################PCA算法函数######################################
@@ -108,12 +108,12 @@ def construct_weight_matrix(Data, method, threshold, k,t):
     Weight_matrix += np.exp(-distances ** 2 / t)
     return Weight_matrix
 
-def Best_weight_matrix(Data, k, t, weight_knn, weight_epsilon):
+def Best_weight_matrix(Data, threshold, k, t, weight_knn, weight_epsilon):
     n = len(Data)
     best_weight_matrix = np.zeros((n, n))
     # 计算k最近邻矩阵的权重矩阵和 epsilon 邻域矩阵
-    knn_weight_matrix = construct_weight_matrix(Data, 'knn', k, t)
-    epsilon_weight_matrix = construct_weight_matrix(Data, 'epsilon', k, t)
+    knn_weight_matrix = construct_weight_matrix(Data, 'knn', threshold, k, t)
+    epsilon_weight_matrix = construct_weight_matrix(Data, 'epsilon', threshold, k, t)
     
     # 加权平均计算
     best_weight_matrix = weight_knn * knn_weight_matrix + weight_epsilon * epsilon_weight_matrix
@@ -121,7 +121,7 @@ def Best_weight_matrix(Data, k, t, weight_knn, weight_epsilon):
 
 def LPP(Data, d, method, threshold, k, t):
     if method == 'knn_epsilon':
-        Weight_matrix = Best_weight_matrix(Data, k, t, 0.5, 0.5)
+        Weight_matrix = Best_weight_matrix(Data, threshold, k, t, 0.5, 0.5)
     else:
         Weight_matrix = construct_weight_matrix(Data, method, threshold, k, t)
     Degree_matrix = np.diag(np.sum(Weight_matrix, axis=1))
@@ -193,7 +193,7 @@ def MLDA(train_data, train_labels, faceshape, d):
     # 计算投影矩阵W
     W_value = np.dot(np.linalg.inv(Sw), Sb)  
     # 计算广义特征值问题的特征值和特征向量，提取前d个最大特征值对应的特征向量
-    eigen_values, eigen_vectors = scipy.linalg.eigh(W_value, eigvals=((faceshape[0] * faceshape[1]-d),(faceshape[0] * faceshape[1]-1)))  # 计算特征值和特征向量
+    eigen_values, eigen_vectors = eigh(W_value, eigvals=((faceshape[0] * faceshape[1]-d),(faceshape[0] * faceshape[1]-1)))  # 计算特征值和特征向量
     return eigen_vectors, overall_mean, classes_means, Z, Sb, Sw, W_value
 
 ###############################MLDA算法函数######################################
@@ -206,7 +206,7 @@ def MLDA(train_data, train_labels, faceshape, d):
 def DLPP_LPP(train_data, method, threshold, k, t):
     Data = train_data.T
     if method == 'knn_epsilon':
-        Weight_matrix = Best_weight_matrix(Data, k, t, 0.5, 0.5)
+        Weight_matrix = Best_weight_matrix(Data, threshold, k, t, 0.5, 0.5)
     else:
         Weight_matrix = construct_weight_matrix(Data, method, threshold, k, t)
     Degree_matrix = np.diag(np.sum(Weight_matrix, axis=1))
@@ -258,14 +258,14 @@ def read_images(dataset_dir, target_size=None):
     data = []  # 存储图像数据的列表
     labels = []  # 存储标签的列表
     faceshape = [] # 存储图像形状
-    for class_dir in os.listdir(dataset_dir):  # 遍历数据集文件夹中的文件夹（每个文件夹代表一个类别）
-        class_path = os.path.join(dataset_dir, class_dir)  # 类别文件夹路径
-        for file_name in os.listdir(class_path):  # 遍历每个类别文件夹中的图像文件
-            file_path = os.path.join(class_path, file_name)  # 图像文件路径
-            img = cv2.imread(file_path, cv2.IMREAD_GRAYSCALE)  # 读取灰度图像
+    for class_dir in listdir(dataset_dir):  # 遍历数据集文件夹中的文件夹（每个文件夹代表一个类别）
+        class_path = path.join(dataset_dir, class_dir)  # 类别文件夹路径
+        for file_name in listdir(class_path):  # 遍历每个类别文件夹中的图像文件
+            file_path = path.join(class_path, file_name)  # 图像文件路径
+            img = imread(file_path, IMREAD_GRAYSCALE)  # 读取灰度图像
             # 如果指定了目标尺寸，则缩放图像
             if target_size is not None:
-                img = cv2.resize(img, target_size, interpolation=cv2.INTER_AREA)
+                img = resize(img, target_size, interpolation=INTER_AREA)
             # 读取第一张灰度图像的大小作为图片形状
             if not faceshape:
                 faceshape = img.shape
