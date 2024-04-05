@@ -11,7 +11,7 @@ class Window(QMainWindow):
         super().__init__()
 
         self.setWindowTitle("DLPP LPP LDA PCA 人脸特征提取与识别程序")
-        self.setGeometry(0, 0, 1200, 1000)
+        self.setGeometry(0, 0, 1200, 1300)
         # 居中显示窗口
         self.center_on_screen()
 
@@ -45,7 +45,7 @@ class Window(QMainWindow):
         self.target_size_combo = QComboBox()
         for percentage in range(5, 105, 5):
             self.target_size_combo.addItem(f"{percentage}%")
-        self.target_size_combo.setCurrentText("30%")  # 设置初始值为20%,即长宽均为原来的20%且取整
+        self.target_size_combo.setCurrentText("35%")  # 设置初始值为20%,即长宽均为原来的20%且取整
         self.main_layout.addWidget(self.target_size_combo)
 
         self.d_label = QLabel("请输入降维后的维度d:")
@@ -64,6 +64,23 @@ class Window(QMainWindow):
         self.method_combo.currentIndexChanged.connect(self.toggle_parameters_visibility)  # 连接方法选择框的信号与槽函数
         self.main_layout.addWidget(self.method_combo)
 
+        self.lpp_method_label = QLabel("请选择邻域选择方法:")
+        self.main_layout.addWidget(self.lpp_method_label)
+        self.lpp_method_combo = QComboBox()
+        self.lpp_method_combo.addItem("adaptive_knn")
+        self.lpp_method_combo.addItem("knn_epsilon")
+        self.lpp_method_combo.addItem("knn")
+        self.lpp_method_combo.addItem("epsilon")
+        self.lpp_method_combo.setCurrentText("adaptive_knn")  # 设置初始值为当前选择
+        self.lpp_method_combo.currentIndexChanged.connect(self.toggle_parameters_visibility)  # 连接方法选择框的信号与槽函数
+        self.main_layout.addWidget(self.lpp_method_combo)
+
+        self.adaptive_knn_label = QLabel("请输入自适应knn的欧氏距离差值阈值threshold:")
+        self.main_layout.addWidget(self.adaptive_knn_label)
+        self.adaptive_knn_input = QLineEdit()
+        self.adaptive_knn_input.setText("0.5")  # 默认值为0.5
+        self.main_layout.addWidget(self.adaptive_knn_input)
+
         self.k_label = QLabel("请输入数据点最近邻数量k:")
         self.main_layout.addWidget(self.k_label)
         self.k_input = QLineEdit()
@@ -73,16 +90,8 @@ class Window(QMainWindow):
         self.t_label = QLabel("请输入热核参数t:")
         self.main_layout.addWidget(self.t_label)
         self.t_input = QLineEdit()
-        self.t_input.setText("60000")  # 默认值为60000
+        self.t_input.setText("100000")  # 默认值为100000
         self.main_layout.addWidget(self.t_input)
-
-        self.lpp_method_label = QLabel("请选择邻域选择方法:")
-        self.main_layout.addWidget(self.lpp_method_label)
-        self.lpp_method_combo = QComboBox()
-        self.lpp_method_combo.addItem("knn")
-        self.lpp_method_combo.addItem("epsilon")
-        self.lpp_method_combo.addItem("combined")
-        self.main_layout.addWidget(self.lpp_method_combo)
 
         # 添加运行次数输入框
         self.runs_label = QLabel("请输入运行次数:")
@@ -102,7 +111,7 @@ class Window(QMainWindow):
         self.info_textedit.setReadOnly(True)  # 设置为只读模式
         self.main_layout.addWidget(self.info_textedit)
 
-        self.eigenfaces_label = QLabel("特征脸显示:")
+        self.eigenfaces_label = QLabel("最后一次运行的特征脸显示:")
         self.main_layout.addWidget(self.eigenfaces_label)
 
         self.canvas = FigureCanvas(plt.figure())
@@ -136,6 +145,7 @@ class Window(QMainWindow):
             d = int(self.d_input.text())
             k = int(self.k_input.text())
             t = int(self.t_input.text())
+            threshold = float(self.adaptive_knn_input.text())
             method = self.method_combo.currentText()
             lpp_method = self.lpp_method_combo.currentText()
             train_test_split_ratio = float(self.train_test_split_combo.currentText())
@@ -146,24 +156,23 @@ class Window(QMainWindow):
             else:
                 percentage = int(target_size_str[:-1]) / 100.0
                 target_size = (int(faceshape_temp[0] * percentage), int(faceshape_temp[1] * percentage))  # 使用 faceshape 确定原始尺寸
+            
             runs = int(self.runs_input.text())  # 获取运行次数
-
             accuracies = []  # 用于存储每次运行的准确率
-
+            start_time = time.time()  # 记录开始时间
             # 更改按钮文本为“程序执行中”
             self.execute_button.setText("程序执行中，请勿操作！")
             QApplication.processEvents()  # 强制刷新界面，立即显示按钮文本变更
 
-            start_time = time.time()  # 记录开始时间
-
             for _ in range(runs):
                 data, labels, faceshape = read_images(self.dataset_path, target_size=target_size)
                 train_data, train_labels, test_data, test_labels = train_test_split(data, labels, train_test_split_ratio=train_test_split_ratio)
+                rate = 0.0  # 初始化识别率
                 if method == "DLPP":
                     # 调用 DLPP.py 文件中的相关函数，并获取其输出信息
                     overall_mean = np.mean(train_data, axis=0).reshape(-1, 1) # 计算训练集的整体均值脸
                     # 调用 DLPP 函数并接收返回的中间变量信息
-                    F, L, B, objective_value, eigenfaces = DLPP(train_data, train_labels, d, lpp_method, k, t)
+                    F, L, B, objective_value, eigenfaces = DLPP(train_data, train_labels, d, lpp_method, threshold, k, t)
                     weight_matrix = np.dot(eigenfaces.T, train_data.T- overall_mean)
 
                     # 将最后一次运行的信息显示在文本编辑框中
@@ -191,7 +200,7 @@ class Window(QMainWindow):
                 elif method == "LPP":
                     # 调用 LPP 函数并接收返回的中间变量信息
                     train_data = train_data.T
-                    eigenfaces = LPP(train_data, d, lpp_method, k, t)
+                    eigenfaces = LPP(train_data, d, lpp_method, threshold, k, t)
                     overall_mean = np.mean(train_data , axis=1).reshape(-1, 1)
                     weight_matrix = eigenfaces.T @ (train_data-overall_mean) 
                     # 将最后一次运行的信息显示在文本编辑框中
@@ -309,8 +318,8 @@ class Window(QMainWindow):
 
     def toggle_parameters_visibility(self):
         # 获取当前选择的方法
+        selected_lpp_method = self.lpp_method_combo.currentText()
         selected_method = self.method_combo.currentText()
-
         # 设置参数框的可见性
         if selected_method == "MLDA":
             self.k_label.setVisible(False)
@@ -321,9 +330,19 @@ class Window(QMainWindow):
             self.d_input.setVisible(True)
             self.lpp_method_label.setVisible(False)
             self.lpp_method_combo.setVisible(False)
-        elif selected_method == "LPP":
-            self.k_label.setVisible(True)
-            self.k_input.setVisible(True)
+            self.adaptive_knn_label.setVisible(False)
+            self.adaptive_knn_input.setVisible(False)
+        elif selected_method == "LPP": 
+            if selected_lpp_method == "adaptive_knn":
+                self.adaptive_knn_label.setVisible(True)
+                self.adaptive_knn_input.setVisible(True)
+                self.k_label.setVisible(False)
+                self.k_input.setVisible(False)
+            else:
+                self.adaptive_knn_label.setVisible(False)
+                self.adaptive_knn_input.setVisible(False)
+                self.k_label.setVisible(True)
+                self.k_input.setVisible(True)
             self.t_label.setVisible(True)
             self.t_input.setVisible(True)
             self.d_label.setVisible(True)
@@ -331,8 +350,16 @@ class Window(QMainWindow):
             self.lpp_method_label.setVisible(True)
             self.lpp_method_combo.setVisible(True)
         elif selected_method == "DLPP":
-            self.k_label.setVisible(True)
-            self.k_input.setVisible(True)
+            if selected_lpp_method == "adaptive_knn":
+                self.adaptive_knn_label.setVisible(True)
+                self.adaptive_knn_input.setVisible(True)
+                self.k_label.setVisible(False)
+                self.k_input.setVisible(False)
+            else:
+                self.adaptive_knn_label.setVisible(False)
+                self.adaptive_knn_input.setVisible(False) 
+                self.k_label.setVisible(True)
+                self.k_input.setVisible(True)
             self.t_label.setVisible(True)
             self.t_input.setVisible(True)
             self.d_label.setVisible(True)
@@ -348,6 +375,8 @@ class Window(QMainWindow):
             self.d_input.setVisible(True)
             self.lpp_method_label.setVisible(False)
             self.lpp_method_combo.setVisible(False)
+            self.adaptive_knn_label.setVisible(False)
+            self.adaptive_knn_input.setVisible(False)
         else:
             raise ValueError(f"未知方法: {selected_method}")
 

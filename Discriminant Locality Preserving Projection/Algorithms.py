@@ -25,6 +25,33 @@ def PCA(X, n_components):
     return principal_components, mean
 
 ###############################LPP算法函数######################################
+#####################计算自适应knn graph####################
+def compute_adaptive_k(Data, threshold):
+    n = Data.shape[1]  # 修改此处获取样本点的数量
+    distances = np.sqrt(np.sum((Data.T[:, :, None] - Data.T[:, :, None].T) ** 2, axis=1)) 
+    sorted_distances = np.sort(distances, axis=1)  # 对距离矩阵的每一行进行排序
+    # 找出sorted_distances每一行的前一列与后一列距离之差第一次小于阈值的位置并保存为一个列矩阵
+    adaptive_k = np.zeros((n, 1))
+    for i in range(n):
+        for j in range(1, n-1):
+            if (sorted_distances[i, j+1] - sorted_distances[i, j])  < threshold:
+                adaptive_k[i] = j
+                break           
+    return adaptive_k, sorted_distances, distances
+
+# 根据adaptive_k中每一行的k值和sorted_distances对每个数据点构建knn graph
+def adaptive_knn_graph(Data, threshold):
+    adaptive_k, sorted_distances, distances = compute_adaptive_k(Data, threshold)
+    n = Data.shape[1]  # 修改此处获取样本点的数量
+    knn_adjacency_matrix = np.zeros((n, n))  
+    for i in range(n):
+        indices = np.argsort(sorted_distances[i])[:int(adaptive_k[i])]
+        knn_adjacency_matrix[i, indices] = 1
+        knn_adjacency_matrix[indices, i] = 1
+    return knn_adjacency_matrix, adaptive_k, sorted_distances, distances 
+#####################计算自适应knn graph####################
+
+#####################计算经典knn graph####################
 def knn_graph(Data, method, k):
     n = Data.shape[1]  # 修改此处获取样本点的数量
     knn_adjacency_matrix = np.zeros((n, n))  
@@ -36,7 +63,9 @@ def knn_graph(Data, method, k):
         knn_adjacency_matrix[i, indices[i]] = 1
         knn_adjacency_matrix[indices[i], i] = 1
     return knn_adjacency_matrix, distances
+#####################计算经典knn graph####################
 
+#####################计算epsilon graph####################
 def compute_avg_radius(n, distances): 
     radius = np.zeros(n)
     for i in range(n):
@@ -44,28 +73,34 @@ def compute_avg_radius(n, distances):
         radius[i] = avg_radius
     return radius
 
-def compute_knn_average_radius(distances, k):
-    sorted_distances = np.sort(distances, axis=1)  # 对距离矩阵的每一行进行排序
+def compute_knn_average_radius(sorted_distances, k):
     avg_knn_distances = np.mean(sorted_distances[:, 1:k+1], axis=1)  # 计算每个数据点的前k个距离的平均值作为半径
     return avg_knn_distances
+#####################计算epsilon graph####################
 
-def compute_neighborhood_matrix(Data, method, k):
-    n = Data.shape[1]  # 修改获取样本点的数量的方式
-    knn_adjacency_matrix, distances = knn_graph(Data, method, k)
+def compute_neighborhood_matrix(Data, method, threshold, k):
+    n = Data.shape[1]  # 获取样本点的数量
+    distances = np.zeros((n, n))
+    sorted_distances = np.zeros((n, n))
+    adaptive_k = np.zeros((n, 1))
     if method == 'knn':
+        knn_adjacency_matrix, distances = knn_graph(Data, method, k)
+        return knn_adjacency_matrix, distances
+    elif method == 'adaptive_knn':
+        knn_adjacency_matrix, adaptive_k, sorted_distances, distances = adaptive_knn_graph(Data, threshold)
         return knn_adjacency_matrix, distances
     adjacency_matrix = np.zeros((n, n))
-    radius = compute_knn_average_radius(distances, k)
+    radius = compute_knn_average_radius(sorted_distances, k)
     for i in range(n):
         neighbors = np.where(distances[:, i] <= radius[i])[0]  # 修改获取epsilon邻域内的样本索引的方式
         adjacency_matrix[i, neighbors] = 1
         adjacency_matrix[neighbors, i] = 1
     return adjacency_matrix, distances
 
-def construct_weight_matrix(Data, method, k, t):
+def construct_weight_matrix(Data, method, threshold, k,t):
     n = Data.shape[1]  # 修改获取样本点的数量的方式
     Weight_matrix = np.zeros((n, n))
-    adjacency_matrix, distances = compute_neighborhood_matrix(Data, method, k)
+    adjacency_matrix, distances = compute_neighborhood_matrix(Data, method, threshold, k)
     similarity_matrix = np.exp(-distances ** 2 / t)
     i_indices, j_indices = np.where(adjacency_matrix == 1)
     Weight_matrix[i_indices, j_indices] = similarity_matrix[i_indices, j_indices]
@@ -73,8 +108,22 @@ def construct_weight_matrix(Data, method, k, t):
     Weight_matrix += np.exp(-distances ** 2 / t)
     return Weight_matrix
 
-def LPP(Data, d, method, k, t):
-    Weight_matrix = construct_weight_matrix(Data, method, k, t)
+def Best_weight_matrix(Data, k, t, weight_knn, weight_epsilon):
+    n = len(Data)
+    best_weight_matrix = np.zeros((n, n))
+    # 计算k最近邻矩阵的权重矩阵和 epsilon 邻域矩阵
+    knn_weight_matrix = construct_weight_matrix(Data, 'knn', k, t)
+    epsilon_weight_matrix = construct_weight_matrix(Data, 'epsilon', k, t)
+    
+    # 加权平均计算
+    best_weight_matrix = weight_knn * knn_weight_matrix + weight_epsilon * epsilon_weight_matrix
+    return best_weight_matrix
+
+def LPP(Data, d, method, threshold, k, t):
+    if method == 'knn_epsilon':
+        Weight_matrix = Best_weight_matrix(Data, k, t, 0.5, 0.5)
+    else:
+        Weight_matrix = construct_weight_matrix(Data, method, threshold, k, t)
     Degree_matrix = np.diag(np.sum(Weight_matrix, axis=1))
     Laplacian_matrix = Degree_matrix - Weight_matrix
     objective_value = np.dot(np.dot(Data, Laplacian_matrix), Data.T)  # 计算目标函数
@@ -154,9 +203,12 @@ def MLDA(train_data, train_labels, faceshape, d):
 ###############################DLPP算法函数######################################
 
 # 计算每个类别的权重矩阵，度矩阵和拉普拉斯矩阵
-def DLPP_LPP(train_data, train_labels, method, d, k, t):
+def DLPP_LPP(train_data, method, threshold, k, t):
     Data = train_data.T
-    Weight_matrix = construct_weight_matrix(Data, method, k, t)
+    if method == 'knn_epsilon':
+        Weight_matrix = Best_weight_matrix(Data, k, t, 0.5, 0.5)
+    else:
+        Weight_matrix = construct_weight_matrix(Data, method, threshold, k, t)
     Degree_matrix = np.diag(np.sum(Weight_matrix, axis=1))
     Laplacian_matrix = Degree_matrix - Weight_matrix
     return Laplacian_matrix, Data
@@ -166,11 +218,11 @@ def DLPP_MLDA(train_data, train_labels, d):
     classes_means = compute_classes_mean_matrix(train_data, train_labels)
     return classes_means.T
 
-def DLPP(train_data, train_labels, d, lpp_method, k, t):
+def DLPP(train_data, train_labels, d, lpp_method, threshold, k, t):
     # Step 1: 使用MLDA进行特征提取
     F = DLPP_MLDA(train_data, train_labels, d)
     # Step 2: 使用LPP进行特征提取
-    L, X = DLPP_LPP(train_data, train_labels, lpp_method, d, k, t)
+    L, X = DLPP_LPP(train_data, lpp_method, threshold, k, t)
     # Step 3: 计算权重矩阵B
     num_classes = len(np.unique(train_labels))  # 计算训练集中的类别数
     B = np.zeros((num_classes, num_classes))  # 初始化权重矩阵B
@@ -240,7 +292,7 @@ def train_test_split(data, labels, train_test_split_ratio):
     
     return train_data, train_labels, test_data, test_labels
 
-
+# 测试DLPP, LPP, PCA要查询的图像
 def test_image(i, faceshape, overall_mean, train_labels, train_data, test_labels, query, dlpp_eigenfaces, dlpp_weight_matrix):
     # 计算测试图像的权重向量
     query_weight = (dlpp_eigenfaces.T @ (query - overall_mean.flatten()).reshape(-1, 1))
@@ -254,19 +306,9 @@ def test_image(i, faceshape, overall_mean, train_labels, train_data, test_labels
         flag = True
     else:
         flag = False
-    """
-    # 可视化
-    fig, axes = plt.subplots(1, 2, sharex=True, sharey=True, figsize=(8, 6))
-    axes[0].imshow(query.reshape(faceshape), cmap="gray")
-    axes[0].set_title("Query Image")
-    axes[1].set_xlabel("Euclidean Distance: {:.0f}".format(euclidean_distances[best_match_index]))
-    axes[1].imshow(train_data[best_match_index].reshape(faceshape), cmap="gray")
-    axes[1].set_title("Best Match")
-    plt.show()
-    """
     return flag
 
-# 测试要查询的图像
+# 测试LDA要查询的图像
 def test_query_class_sample(W, query_image, j, overall_mean, train_data, train_labels, test_labels):
     # 计算查询图像的线性判别函数值,即计算 d(Q) = W^T (Q - P)
     d = np.dot(W.T, (query_image - overall_mean))
@@ -286,16 +328,5 @@ def test_query_class_sample(W, query_image, j, overall_mean, train_data, train_l
         flag = True
     else:
         flag = False
-    '''
-    # 可视化测试图像和最佳匹配图像
-    fig, axes = plt.subplots(1, 2, figsize=(8, 4))
-    axes[0].imshow(query_image.reshape(faceshape), cmap='gray')
-    axes[0].set_title('Query Image')
-    axes[0].axis('off')
-    axes[1].imshow(train_data[best_match_index].reshape(faceshape), cmap='gray')
-    axes[1].set_title(f'Best Match Image (||d|| = {discriminant_values[best_match_index]:.2f})')
-    axes[1].axis('off')
-    plt.show()
-    '''
     # 返回匹配结果
     return flag
