@@ -59,6 +59,7 @@ class Window(QMainWindow):
         self.method_combo.addItem("LPP")
         self.method_combo.addItem("MLDA")
         self.method_combo.addItem("PCA")
+        self.method_combo.setCurrentText("DLPP")  # 设置初始值为当前选择
         self.method_combo.currentIndexChanged.connect(self.toggle_parameters_visibility)  # 连接方法选择框的信号与槽函数
         self.main_layout.addWidget(self.method_combo)
 
@@ -77,7 +78,7 @@ class Window(QMainWindow):
         self.adaptive_knn_label = QLabel("请输入自适应knn的欧氏距离差值阈值threshold:")
         self.main_layout.addWidget(self.adaptive_knn_label)
         self.adaptive_knn_input = QLineEdit()
-        self.adaptive_knn_input.setText("0.5")  # 默认值为0.5
+        self.adaptive_knn_input.setText("1")  # 默认值为1
         self.main_layout.addWidget(self.adaptive_knn_input)
 
         self.k_label = QLabel("请输入数据点最近邻数量k:")

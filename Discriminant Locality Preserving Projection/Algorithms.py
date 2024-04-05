@@ -27,7 +27,7 @@ def PCA(X, n_components):
 ###############################LPP算法函数######################################
 #####################计算自适应knn graph####################
 def compute_adaptive_k(Data, threshold):
-    n = Data.shape[1]  # 修改此处获取样本点的数量
+    n = Data.shape[1]  
     distances = np.sqrt(np.sum((Data.T[:, :, None] - Data.T[:, :, None].T) ** 2, axis=1)) 
     sorted_distances = np.sort(distances, axis=1)  # 对距离矩阵的每一行进行排序
     # 找出sorted_distances每一行的前一列与后一列距离之差第一次小于阈值的位置并保存为一个列矩阵
@@ -42,7 +42,7 @@ def compute_adaptive_k(Data, threshold):
 # 根据adaptive_k中每一行的k值和sorted_distances对每个数据点构建knn graph
 def adaptive_knn_graph(Data, threshold):
     adaptive_k, sorted_distances, distances = compute_adaptive_k(Data, threshold)
-    n = Data.shape[1]  # 修改此处获取样本点的数量
+    n = Data.shape[1]  
     knn_adjacency_matrix = np.zeros((n, n))  
     for i in range(n):
         indices = np.argsort(sorted_distances[i])[:int(adaptive_k[i])]
@@ -53,9 +53,9 @@ def adaptive_knn_graph(Data, threshold):
 
 #####################计算经典knn graph####################
 def knn_graph(Data, method, k):
-    n = Data.shape[1]  # 修改此处获取样本点的数量
+    n = Data.shape[1]  
     knn_adjacency_matrix = np.zeros((n, n))  
-    distances = np.sqrt(np.sum((Data.T[:, :, None] - Data.T[:, :, None].T) ** 2, axis=1)) # 修改计算欧式距离矩阵的方式
+    distances = np.sqrt(np.sum((Data.T[:, :, None] - Data.T[:, :, None].T) ** 2, axis=1))
     if method == 'epsilon':
         return knn_adjacency_matrix, distances
     indices = np.argsort(distances, axis=1)[:, 1:k+1]
@@ -92,13 +92,13 @@ def compute_neighborhood_matrix(Data, method, threshold, k):
     adjacency_matrix = np.zeros((n, n))
     radius = compute_knn_average_radius(sorted_distances, k)
     for i in range(n):
-        neighbors = np.where(distances[:, i] <= radius[i])[0]  # 修改获取epsilon邻域内的样本索引的方式
+        neighbors = np.where(distances[:, i] <= radius[i])[0]  
         adjacency_matrix[i, neighbors] = 1
         adjacency_matrix[neighbors, i] = 1
     return adjacency_matrix, distances
 
 def construct_weight_matrix(Data, method, threshold, k,t):
-    n = Data.shape[1]  # 修改获取样本点的数量的方式
+    n = Data.shape[1]  
     Weight_matrix = np.zeros((n, n))
     adjacency_matrix, distances = compute_neighborhood_matrix(Data, method, threshold, k)
     similarity_matrix = np.exp(-distances ** 2 / t)
