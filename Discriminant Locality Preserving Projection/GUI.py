@@ -52,7 +52,6 @@ class Window(QMainWindow):
         self.target_size_combo = QComboBox()
         for percentage in range(5, 105, 5):
             self.target_size_combo.addItem(f"{percentage}%")
-        self.target_size_combo.setCurrentText("35%")  # 设置初始值为x%,即长宽均为原来的x%且取整
         self.main_layout.addWidget(self.target_size_combo)
 
         # 输入降维后的维度
@@ -126,6 +125,11 @@ class Window(QMainWindow):
 
         # 初始化数据集路径变量
         self.dataset_path = self.default_dataset_path
+        if "ORL" in self.default_dataset_path:
+            self.mnist_split_label.setVisible(False)
+            self.mnist_split_combo.setVisible(False)
+            self.target_size_combo.setCurrentText("35%")  # 设置初始值为x%,即长宽均为原来的x%且取整
+
 
     def center_on_screen(self):
         # 获取屏幕尺寸和窗口尺寸
@@ -152,6 +156,7 @@ class Window(QMainWindow):
             self.target_size_combo.setVisible(True)
             self.mnist_split_label.setVisible(False)
             self.mnist_split_combo.setVisible(False)
+            self.target_size_combo.setCurrentText("35%")  # 设置初始值为x%,即长宽均为原来的x%且取整
         elif "MNIST_ORG" in self.dataset_path:
             self.train_test_split_label.setVisible(False)
             self.train_test_split_combo.setVisible(False)
@@ -166,6 +171,7 @@ class Window(QMainWindow):
             self.target_size_combo.setVisible(True)
             self.mnist_split_label.setVisible(False)
             self.mnist_split_combo.setVisible(False)
+            self.target_size_combo.setCurrentText("100%")  # 设置初始值为x%,即长宽均为原来的x%且取整
 
     def execute_algorithm(self):
         try:
