@@ -226,12 +226,10 @@ def DLPP_MLDA(train_data, train_labels, d):
 def DLPP(train_data, train_labels, d, lpp_method, k, t):
     # Step 1: 使用MLDA进行特征提取
     F = DLPP_MLDA(train_data, train_labels, d)
-    np.savetxt('F.csv', F, delimiter=',')
     # Step 2: 使用LPP进行特征提取
     L, X = DLPP_LPP(train_data, lpp_method, k, t)
     # Step 3: 计算权重矩阵B
     num_classes = len(np.unique(train_labels))  # 计算训练集中的类别数
-    print(num_classes)
     B = np.zeros((num_classes, num_classes))  # 初始化权重矩阵B
     # 遍历每对类别，计算其对应的权重
     for i in range(num_classes):  # 遍历每个类别
@@ -244,13 +242,13 @@ def DLPP(train_data, train_labels, d, lpp_method, k, t):
     # Step 4: 计算E和H矩阵
     E = np.diag(np.sum(B, axis=1))
     H = E - B
-    np.savetxt('H.csv', H, delimiter=',')
-    # Step 5: 计算目标函数的分母和分子
-    denominator = np.dot(np.dot(F, H), F.T)
+
+    # Step 5: 分式
+    denominator = np.dot(np.dot(F, H), F.T) + 1e-10  # 添加一个微小的非零值，以避免除以零
     numerator = np.dot(np.dot(X, L), X.T)
-    # Step 6: 分式
     objective_value = numerator / denominator
-    # Step 7: 求解广义特征值问题的特征值和特征向量
+
+    # Step 6: 求解广义特征值问题的特征值和特征向量
     eigenvalues, eigenvectors = eigs(objective_value, k=d+1)
     sorted_indices = np.argsort(eigenvalues.real)
     selected_indices = sorted_indices[1:d + 1]  
