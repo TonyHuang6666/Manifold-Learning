@@ -181,7 +181,8 @@ class Window(QMainWindow):
             t = int(self.t_input.text())
             method = self.method_combo.currentText()
             lpp_method = self.lpp_method_combo.currentText()
-
+            faceshape_temp = None
+            
             #如果读取的是ORL数据集，即self.dataset_path中含有"ORL"字符串
             if "ORL" in self.dataset_path:
                 data_temp, labels_temp, faceshape_temp = read_images(self.dataset_path, target_size=None)
@@ -215,8 +216,6 @@ class Window(QMainWindow):
                 if "ORL" in self.dataset_path:
                     data, labels, faceshape = read_images(self.dataset_path, target_size=target_size)
                     train_data, train_labels, test_data, test_labels = train_test_split(data, labels, train_test_split_ratio=train_test_split_ratio)
-                elif "Reduced " in self.dataset_path:
-                    train_data, train_labels, test_data, test_labels, faceshape = read_mini_minst_images(self.dataset_path, target_size=target_size)
                 rate = 0.0  # 初始化识别率
                 if method == "DLPP":
                     # 调用 DLPP 函数并接收返回的中间变量信息
