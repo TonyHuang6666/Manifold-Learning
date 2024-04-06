@@ -26,6 +26,7 @@ class Window(QMainWindow):
         self.dataset_button = QPushButton("选择其他数据集")
         self.dataset_button.clicked.connect(self.select_dataset)
         self.main_layout.addWidget(self.dataset_button)
+
         self.train_test_split_label = QLabel("请选择训练集划分比例:")
         self.main_layout.addWidget(self.train_test_split_label)
         self.train_test_split_combo = QComboBox()
@@ -34,6 +35,16 @@ class Window(QMainWindow):
             self.train_test_split_combo.addItem("{:.2f}".format(ratio_decimal))
         self.train_test_split_combo.setCurrentText("0.70")
         self.main_layout.addWidget(self.train_test_split_combo)
+
+        #原版MNIST数据集的裁切
+        self.mnist_split_label = QLabel("请选择原版MNIST数据集的裁切比例:")
+        self.main_layout.addWidget(self.mnist_split_label)
+        self.mnist_split_combo = QComboBox()
+        for ratio in range(1, 100, 1):
+            ratio_decimal = ratio / 100.0
+            self.mnist_split_combo.addItem("{:.2f}".format(ratio_decimal))
+        self.mnist_split_combo.setCurrentText("0.01")
+        self.main_layout.addWidget(self.mnist_split_combo)
 
         # 选择图像缩放百分比
         self.target_size_label = QLabel("请选择图像缩放百分比:")
@@ -139,16 +150,22 @@ class Window(QMainWindow):
             self.train_test_split_combo.setVisible(True)
             self.target_size_label.setVisible(True)
             self.target_size_combo.setVisible(True)
+            self.mnist_split_label.setVisible(False)
+            self.mnist_split_combo.setVisible(False)
         elif "MNIST_ORG" in self.dataset_path:
             self.train_test_split_label.setVisible(False)
             self.train_test_split_combo.setVisible(False)
             self.target_size_label.setVisible(False)
             self.target_size_combo.setVisible(False)
+            self.mnist_split_label.setVisible(True)
+            self.mnist_split_combo.setVisible(True)
         elif "Reduced " in self.dataset_path:
             self.train_test_split_label.setVisible(False)
             self.train_test_split_combo.setVisible(False)
             self.target_size_label.setVisible(True)
             self.target_size_combo.setVisible(True)
+            self.mnist_split_label.setVisible(False)
+            self.mnist_split_combo.setVisible(False)
 
     def execute_algorithm(self):
         try:
@@ -165,7 +182,8 @@ class Window(QMainWindow):
                 train_test_split_ratio = float(self.train_test_split_combo.currentText())
             #如果读取的是MNIST数据集，即self.dataset_path中含有"MNIST"字符串
             elif "MNIST_ORG" in self.dataset_path:
-                train_data, train_labels, test_data, test_labels, faceshape = read_mnist_dataset(self.dataset_path, fraction=0.01)
+                fraction = float(self.mnist_split_combo.currentText())
+                train_data, train_labels, test_data, test_labels, faceshape = read_mnist_dataset(self.dataset_path, fraction=fraction)
                 faceshape_temp = faceshape
             #如果读取的是mini_mnist数据集，即self.dataset_path中含有"Reduced"字符串
             elif "Reduced " in self.dataset_path:
