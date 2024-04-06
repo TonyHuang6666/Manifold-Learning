@@ -37,6 +37,8 @@ def compute_adaptive_neighbors(Data):
     for i in range(n):
         # 对距离进行插值，生成连续的函数
         f = interp1d(np.arange(n), sorted_distances[i], kind='linear')
+        #coefficients = np.polyfit(np.arange(n), sorted_distances[i], deg=5)  # 使用6次多项式拟合
+        #f = np.poly1d(coefficients)  # 构建多项式函数
         # 求导
         df = np.gradient(f(np.arange(n)))  # 计算函数的导数
         # 寻找导数为1的位置

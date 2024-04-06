@@ -94,7 +94,6 @@ class Window(QMainWindow):
         self.t_label = QLabel("请输入热核参数t:")
         self.main_layout.addWidget(self.t_label)
         self.t_input = QLineEdit()
-        self.t_input.setText("100000")  # 默认值为100000
         self.main_layout.addWidget(self.t_input)
 
         # 输入运行次数
@@ -129,6 +128,7 @@ class Window(QMainWindow):
             self.mnist_split_label.setVisible(False)
             self.mnist_split_combo.setVisible(False)
             self.target_size_combo.setCurrentText("35%")  # 设置初始值为x%,即长宽均为原来的x%且取整
+            self.t_input.setText("100000")  # 默认值为100000
 
 
     def center_on_screen(self):
@@ -157,6 +157,7 @@ class Window(QMainWindow):
             self.mnist_split_label.setVisible(False)
             self.mnist_split_combo.setVisible(False)
             self.target_size_combo.setCurrentText("35%")  # 设置初始值为x%,即长宽均为原来的x%且取整
+            self.t_input.setText("100000")  # 默认值为100000
         elif "MNIST_ORG" in self.dataset_path:
             self.train_test_split_label.setVisible(False)
             self.train_test_split_combo.setVisible(False)
@@ -164,6 +165,7 @@ class Window(QMainWindow):
             self.target_size_combo.setVisible(False)
             self.mnist_split_label.setVisible(True)
             self.mnist_split_combo.setVisible(True)
+            self.t_input.setText("1500")  # 默认值为1500
         elif "Reduced " in self.dataset_path:
             self.train_test_split_label.setVisible(False)
             self.train_test_split_combo.setVisible(False)
@@ -216,6 +218,11 @@ class Window(QMainWindow):
                 if "ORL" in self.dataset_path:
                     data, labels, faceshape = read_images(self.dataset_path, target_size=target_size)
                     train_data, train_labels, test_data, test_labels = train_test_split(data, labels, train_test_split_ratio=train_test_split_ratio)
+                if "MNIST_ORG" in self.dataset_path:
+                    fraction = float(self.mnist_split_combo.currentText())
+                    train_data, train_labels, test_data, test_labels, faceshape = read_mnist_dataset(self.dataset_path, fraction=fraction)
+                if "Reduced " in self.dataset_path:
+                    train_data, train_labels, test_data, test_labels, faceshape = read_mini_minst_images(self.dataset_path, target_size=target_size)
                 rate = 0.0  # 初始化识别率
                 if method == "DLPP":
                     # 调用 DLPP 函数并接收返回的中间变量信息
