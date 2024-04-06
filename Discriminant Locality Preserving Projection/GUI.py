@@ -67,10 +67,10 @@ class Window(QMainWindow):
         self.lpp_method_label = QLabel("请选择邻域选择方法:")
         self.main_layout.addWidget(self.lpp_method_label)
         self.lpp_method_combo = QComboBox()
-        self.lpp_method_combo.addItem("adaptive_epsilon")
-        self.lpp_method_combo.addItem("knn_epsilon")
         self.lpp_method_combo.addItem("knn")
         self.lpp_method_combo.addItem("epsilon")
+        self.lpp_method_combo.addItem("knn_epsilon")
+        self.lpp_method_combo.addItem("adaptive_epsilon")
         self.lpp_method_combo.setCurrentText("knn")  # 设置初始值为当前选择
         self.lpp_method_combo.currentIndexChanged.connect(self.toggle_parameters_visibility)  # 连接方法选择框的信号与槽函数
         self.main_layout.addWidget(self.lpp_method_combo)

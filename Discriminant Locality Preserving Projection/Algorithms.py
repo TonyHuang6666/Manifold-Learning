@@ -88,7 +88,6 @@ def compute_neighborhood_matrix(Data, method, k):
     n = Data.shape[1]  # 获取样本点的数量
     distances = np.zeros((n, n))
     sorted_distances = np.zeros((n, n))
-    adaptive_k = np.zeros((n, 1))
     if method == 'knn':
         knn_adjacency_matrix, distances = knn_graph(Data, method, k)
         return knn_adjacency_matrix, distances
