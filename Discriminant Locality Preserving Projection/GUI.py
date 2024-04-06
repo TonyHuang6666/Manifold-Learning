@@ -9,7 +9,7 @@ class Window(QMainWindow):
     def __init__(self):
         super().__init__()
 
-        self.setWindowTitle("DLPP LPP LDA PCA 人脸特征提取与识别程序")
+        self.setWindowTitle("DLPP LPP LDA PCA 图像特征提取与识别程序")
         self.setGeometry(0, 0, 1200, 1300)
         self.center_on_screen()
         self.central_widget = QWidget()
@@ -67,11 +67,11 @@ class Window(QMainWindow):
         self.lpp_method_label = QLabel("请选择邻域选择方法:")
         self.main_layout.addWidget(self.lpp_method_label)
         self.lpp_method_combo = QComboBox()
-        self.lpp_method_combo.addItem("adaptive_knn")
+        self.lpp_method_combo.addItem("adaptive_epsilon")
         self.lpp_method_combo.addItem("knn_epsilon")
         self.lpp_method_combo.addItem("knn")
         self.lpp_method_combo.addItem("epsilon")
-        self.lpp_method_combo.setCurrentText("adaptive_knn")  # 设置初始值为当前选择
+        self.lpp_method_combo.setCurrentText("knn")  # 设置初始值为当前选择
         self.lpp_method_combo.currentIndexChanged.connect(self.toggle_parameters_visibility)  # 连接方法选择框的信号与槽函数
         self.main_layout.addWidget(self.lpp_method_combo)
 
@@ -107,7 +107,7 @@ class Window(QMainWindow):
         self.info_textedit.setReadOnly(True)  # 设置为只读模式
         self.main_layout.addWidget(self.info_textedit)
 
-        self.eigenfaces_label = QLabel("最后一次运行的特征脸显示:")
+        self.eigenfaces_label = QLabel("最后一次运行的特征图像显示:")
         self.main_layout.addWidget(self.eigenfaces_label)
 
         self.canvas = FigureCanvas(plt.figure())
@@ -143,15 +143,28 @@ class Window(QMainWindow):
             t = int(self.t_input.text())
             method = self.method_combo.currentText()
             lpp_method = self.lpp_method_combo.currentText()
-            train_test_split_ratio = float(self.train_test_split_combo.currentText())
-            data_temp, labels_temp, faceshape_temp = read_images(self.dataset_path, target_size=None)
+
+            #如果读取的是ORL数据集，即self.dataset_path中含有"ORL"字符串
+            if "ORL" in self.dataset_path:
+                data_temp, labels_temp, faceshape_temp = read_images(self.dataset_path, target_size=None)
+                train_test_split_ratio = float(self.train_test_split_combo.currentText())
+            #如果读取的是MNIST数据集，即self.dataset_path中含有"MNIST"字符串
+            elif "MNIST_ORG" in self.dataset_path:
+               train_data, train_labels, test_data, test_labels, faceshape = read_mnist_dataset(self.dataset_path, fraction=0.01)
+               faceshape_temp = faceshape
+            #如果读取的是mini_mnist数据集，即self.dataset_path中含有"mini"字符串
+            elif "Reduced " in self.dataset_path:
+                train_data, train_labels, test_data, test_labels, faceshape = read_mini_minst_images(self.dataset_path, target_size=None)
+                faceshape_temp = faceshape
+
+            # 获取目标尺寸并按选择缩放
             target_size_str = self.target_size_combo.currentText()
             if target_size_str == "100%":
                 target_size = None
             else:
                 percentage = int(target_size_str[:-1]) / 100.0
                 target_size = (int(faceshape_temp[0] * percentage), int(faceshape_temp[1] * percentage))  # 使用 faceshape 确定原始尺寸
-            
+        
             runs = int(self.runs_input.text())  # 获取运行次数
             accuracies = []  # 用于存储每次运行的准确率
             start_time = time.time()  # 记录开始时间
@@ -160,26 +173,26 @@ class Window(QMainWindow):
             QApplication.processEvents()  # 强制刷新界面，立即显示按钮文本变更
 
             for _ in range(runs):
-                data, labels, faceshape = read_images(self.dataset_path, target_size=target_size)
-                train_data, train_labels, test_data, test_labels = train_test_split(data, labels, train_test_split_ratio=train_test_split_ratio)
+                if "ORL" in self.dataset_path:
+                    data, labels, faceshape = read_images(self.dataset_path, target_size=target_size)
+                    train_data, train_labels, test_data, test_labels = train_test_split(data, labels, train_test_split_ratio=train_test_split_ratio)
+                elif "Reduced " in self.dataset_path:
+                    train_data, train_labels, test_data, test_labels, faceshape = read_mini_minst_images(self.dataset_path, target_size=target_size)
                 rate = 0.0  # 初始化识别率
                 if method == "DLPP":
-                    # 调用 DLPP.py 文件中的相关函数，并获取其输出信息
-                    overall_mean = np.mean(train_data, axis=0).reshape(-1, 1) # 计算训练集的整体均值脸
                     # 调用 DLPP 函数并接收返回的中间变量信息
-                    F, L, B, objective_value, eigenfaces = DLPP(train_data, train_labels, d, lpp_method,k, t)
+                    F, L, B, objective_value, eigenfaces = DLPP(train_data, train_labels, d, lpp_method, k, t)
                     weight_matrix = np.dot(eigenfaces.T, train_data.T)
 
                     # 将最后一次运行的信息显示在文本编辑框中
                     if _ == runs - 1:
                         self.info_textedit.clear()
                         self.show_info("训练数据集形状:", train_data.T.shape)
-                        self.show_info("平均人脸形状:", overall_mean.shape)
-                        self.show_info("类平均脸形状:", F.shape)
+                        self.show_info("类平均图像形状:", F.shape)
                         self.show_info("拉普拉斯矩阵形状:", L.shape)
                         self.show_info("类权重矩阵形状:", B.shape)
                         self.show_info("目标函数形状:", objective_value.shape)
-                        self.show_info("特征脸形状:", eigenfaces.shape)
+                        self.show_info("特征图像形状:", eigenfaces.shape)
                         self.show_info("权重矩阵形状:", weight_matrix.shape)
                     # 识别率统计
                     wrong_times = 0
@@ -196,15 +209,13 @@ class Window(QMainWindow):
                     # 调用 LPP 函数并接收返回的中间变量信息
                     train_data = train_data.T
                     eigenfaces = LPP(train_data, d, lpp_method, k, t)
-                    overall_mean = np.mean(train_data , axis=1).reshape(-1, 1)
                     weight_matrix = eigenfaces.T @ train_data
                     # 将最后一次运行的信息显示在文本编辑框中
                     if _ == runs - 1:
                         # 将信息显示在文本编辑框中
                         self.info_textedit.clear()
                         self.show_info("训练数据集形状:", train_data.shape)
-                        self.show_info("平均人脸形状:", overall_mean.shape)
-                        self.show_info("特征脸形状:", eigenfaces.shape)
+                        self.show_info("特征图像形状:", eigenfaces.shape)
                         self.show_info("权重矩阵形状:", weight_matrix.shape)
                     # 识别率统计
                     wrong_times = 0
@@ -225,13 +236,13 @@ class Window(QMainWindow):
                         # 将信息显示在文本编辑框中
                         self.info_textedit.clear()
                         self.show_info("训练数据集形状:", train_data.T.shape)
-                        self.show_info("平均人脸形状:", overall_mean.shape)
+                        self.show_info("平均图像形状:", overall_mean.shape)
                         self.show_info("类均值形状:", classes_means.shape)
                         self.show_info("Z形状:", Z.shape)
                         self.show_info("类间散度矩阵形状:", Sb.shape)
                         self.show_info("类内散度矩阵形状:", Sw.shape)
                         self.show_info("投影矩阵形状:", W_value.shape)
-                        self.show_info("特征脸形状:", eigenfaces.shape)
+                        self.show_info("特征图像形状:", eigenfaces.shape)
                     # 识别率统计
                     wrong_times = 0
                     right_times = 0
@@ -252,7 +263,7 @@ class Window(QMainWindow):
                         # 将信息显示在文本编辑框中
                         self.info_textedit.clear()
                         self.show_info("训练数据集形状:", train_data.T.shape)
-                        self.show_info("平均人脸形状:", overall_mean.shape)
+                        self.show_info("平均图像形状:", overall_mean.shape)
                         self.show_info("特征脸形状:", eigenfaces.shape)
                         self.show_info("权重矩阵形状:", weight_matrix.shape)
                     # 识别率统计
@@ -326,7 +337,7 @@ class Window(QMainWindow):
             self.lpp_method_label.setVisible(False)
             self.lpp_method_combo.setVisible(False)
         elif selected_method == "LPP": 
-            if selected_lpp_method == "adaptive_knn":
+            if selected_lpp_method == "adaptive_epsilon":
                 self.k_label.setVisible(False)
                 self.k_input.setVisible(False)
             else:
@@ -339,7 +350,7 @@ class Window(QMainWindow):
             self.lpp_method_label.setVisible(True)
             self.lpp_method_combo.setVisible(True)
         elif selected_method == "DLPP":
-            if selected_lpp_method == "adaptive_knn":
+            if selected_lpp_method == "adaptive_epsilon":
                 self.k_label.setVisible(False)
                 self.k_input.setVisible(False)
             else:

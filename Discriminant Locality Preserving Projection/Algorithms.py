@@ -5,6 +5,7 @@ from cv2 import imread, resize, INTER_AREA, IMREAD_GRAYSCALE
 from scipy.linalg import eigh
 from scipy.sparse.linalg import eigs
 from scipy.interpolate import interp1d
+from struct import unpack
 
 ###############################PCA算法函数######################################
 # PCA实现函数
@@ -26,12 +27,12 @@ def PCA(X, n_components):
     return principal_components, mean
 
 ###############################LPP算法函数######################################
-#####################计算自适应knn graph####################
-def compute_adaptive_k(Data):
+#####################计算自适应epsilon graph####################
+def compute_adaptive_neighbors(Data):
     n = Data.shape[1]  # 样本点的数量
     distances = np.sqrt(np.sum((Data.T[:, :, None] - Data.T[:, :, None].T) ** 2, axis=1)) 
     sorted_distances = np.sort(distances, axis=1)  # 对距离矩阵的每一行进行排序
-    adaptive_k = np.zeros((n, 1))
+    adaptive_neighbors = np.zeros((n, 1))
     # 对每行距离进行插值和求导
     for i in range(n):
         # 对距离进行插值，生成连续的函数
@@ -40,21 +41,21 @@ def compute_adaptive_k(Data):
         df = np.gradient(f(np.arange(n)))  # 计算函数的导数
         # 寻找导数为1的位置
         idx = np.where(df <= 1)[0][0]
-        # 将索引保存为每个数据点的k值
-        adaptive_k[i] = idx
-    return adaptive_k, sorted_distances, distances
+        # 将索引保存为每个数据点的邻居数量
+        adaptive_neighbors[i] = idx
+    return adaptive_neighbors, sorted_distances, distances
 
-# 根据adaptive_k中每一行的k值和sorted_distances对每个数据点构建knn graph
-def adaptive_knn_graph(Data):
-    adaptive_k, sorted_distances, distances = compute_adaptive_k(Data)
+# 根据adaptive_neighbors中每一行的邻居数量和sorted_distances对每个数据点构建epsilon graph
+def adaptive_epsilon_graph(Data):
+    adaptive_neighbors, sorted_distances, distances = compute_adaptive_neighbors(Data)
     n = Data.shape[1]  
-    knn_adjacency_matrix = np.zeros((n, n))  
+    adaptive_epsilon_adjacency_matrix = np.zeros((n, n))  
     for i in range(n):
-        indices = np.argsort(sorted_distances[i])[:int(adaptive_k[i])]
-        knn_adjacency_matrix[i, indices] = 1
-        knn_adjacency_matrix[indices, i] = 1
-    return knn_adjacency_matrix, adaptive_k, sorted_distances, distances 
-#####################计算自适应knn graph####################
+        indices = np.argsort(sorted_distances[i])[:int(adaptive_neighbors[i])]
+        adaptive_epsilon_adjacency_matrix[i, indices] = 1
+        adaptive_epsilon_adjacency_matrix[indices, i] = 1
+    return adaptive_epsilon_adjacency_matrix, distances
+#####################计算自适应epsilon graph####################
 
 #####################计算经典knn graph####################
 def knn_graph(Data, method, k):
@@ -91,9 +92,9 @@ def compute_neighborhood_matrix(Data, method, k):
     if method == 'knn':
         knn_adjacency_matrix, distances = knn_graph(Data, method, k)
         return knn_adjacency_matrix, distances
-    elif method == 'adaptive_knn':
-        knn_adjacency_matrix, adaptive_k, sorted_distances, distances = adaptive_knn_graph(Data)
-        return knn_adjacency_matrix, distances
+    elif method == 'adaptive_epsilon':
+        adaptive_epsilon_adjacency_matrix, distances = adaptive_epsilon_graph(Data)
+        return adaptive_epsilon_adjacency_matrix, distances
     adjacency_matrix = np.zeros((n, n))
     radius = compute_knn_average_radius(sorted_distances, k)
     for i in range(n):
@@ -208,12 +209,12 @@ def MLDA(train_data, train_labels, faceshape, d):
 ###############################DLPP算法函数######################################
 
 # 计算每个类别的权重矩阵，度矩阵和拉普拉斯矩阵
-def DLPP_LPP(train_data, method, threshold, k, t):
+def DLPP_LPP(train_data, method, k, t):
     Data = train_data.T
     if method == 'knn_epsilon':
-        Weight_matrix = Best_weight_matrix(Data, threshold, k, t, 0.5, 0.5)
+        Weight_matrix = Best_weight_matrix(Data, k, t, 0.5, 0.5)
     else:
-        Weight_matrix = construct_weight_matrix(Data, method, threshold, k, t)
+        Weight_matrix = construct_weight_matrix(Data, method, k, t)
     Degree_matrix = np.diag(np.sum(Weight_matrix, axis=1))
     Laplacian_matrix = Degree_matrix - Weight_matrix
     return Laplacian_matrix, Data
@@ -223,11 +224,11 @@ def DLPP_MLDA(train_data, train_labels, d):
     classes_means = compute_classes_mean_matrix(train_data, train_labels)
     return classes_means.T
 
-def DLPP(train_data, train_labels, d, lpp_method, threshold, k, t):
+def DLPP(train_data, train_labels, d, lpp_method, k, t):
     # Step 1: 使用MLDA进行特征提取
     F = DLPP_MLDA(train_data, train_labels, d)
     # Step 2: 使用LPP进行特征提取
-    L, X = DLPP_LPP(train_data, lpp_method, threshold, k, t)
+    L, X = DLPP_LPP(train_data, lpp_method, k, t)
     # Step 3: 计算权重矩阵B
     num_classes = len(np.unique(train_labels))  # 计算训练集中的类别数
     B = np.zeros((num_classes, num_classes))  # 初始化权重矩阵B
@@ -296,6 +297,86 @@ def train_test_split(data, labels, train_test_split_ratio):
     test_labels = labels[train_samples:]
     
     return train_data, train_labels, test_data, test_labels
+
+def read_mini_minst_images(dataset_dir, target_size=None):
+    train_data = []  # 存储训练图像数据的列表
+    train_labels = []  # 存储训练标签的列表
+    test_data = []  # 存储测试图像数据的列表
+    test_labels = []  # 存储测试标签的列表
+    faceshape = []  # 存储图像形状
+
+    # 读取训练集
+    for class_dir in range(10):  # 遍历10个类别文件夹
+        class_path = path.join(dataset_dir, 'Reduced Training data', str(class_dir))  # 类别文件夹路径
+        for file_name in listdir(class_path):  # 遍历每个类别文件夹中的图像文件
+            file_path = path.join(class_path, file_name)  # 图像文件路径
+            img = imread(file_path, IMREAD_GRAYSCALE)  # 读取灰度图像
+            # 如果指定了目标尺寸，则缩放图像
+            if target_size is not None:
+                img = resize(img, target_size, interpolation=INTER_AREA)
+            # 读取第一张灰度图像的大小作为图片形状
+            if not faceshape:
+                faceshape = img.shape
+            train_data.append(img.flatten())  # 将图像展平并添加到训练数据列表中
+            train_labels.append(int(class_dir))  # 将类别标签添加到训练标签列表中
+
+    # 读取测试集
+    for class_dir in range(10):  # 遍历10个类别文件夹
+        class_path = path.join(dataset_dir, 'Reduced Testing data', str(class_dir))  # 类别文件夹路径
+        for file_name in listdir(class_path):  # 遍历每个类别文件夹中的图像文件
+            file_path = path.join(class_path, file_name)  # 图像文件路径
+            img = imread(file_path, IMREAD_GRAYSCALE)  # 读取灰度图像
+            # 如果指定了目标尺寸，则缩放图像
+            if target_size is not None:
+                img = resize(img, target_size, interpolation=INTER_AREA)
+            test_data.append(img.flatten())  # 将图像展平并添加到测试数据列表中
+            test_labels.append(int(class_dir))  # 将类别标签添加到测试标签列表中
+
+    # 将列表转换为numpy数组并返回
+    train_images = np.array(train_data)
+    train_labels = np.array(train_labels).reshape(-1, 1)
+    test_images = np.array(test_data)
+    test_labels = np.array(test_labels).reshape(-1, 1)
+
+    return train_images, train_labels, test_images, test_labels, faceshape
+
+def read_mnist_dataset(dataset_dir, fraction=0.2):
+    def read_images(images_file, num_images, rows, cols):
+        with open(images_file, 'rb') as f:
+            magic, total_images = unpack('>II', f.read(8))
+            images = np.fromfile(f, dtype=np.uint8, count=num_images * rows * cols)
+            images = images.reshape(num_images, rows * cols)
+        return images
+
+    def read_labels(labels_file, num_labels):
+        with open(labels_file, 'rb') as f:
+            magic, total_labels = unpack('>II', f.read(8))
+            labels = np.fromfile(f, dtype=np.uint8, count=num_labels)
+        return labels
+
+    train_images_file = path.join(dataset_dir, 'train-images.idx3-ubyte')
+    train_labels_file = path.join(dataset_dir, 'train-labels.idx1-ubyte')
+    test_images_file = path.join(dataset_dir, 't10k-images.idx3-ubyte')
+    test_labels_file = path.join(dataset_dir, 't10k-labels.idx1-ubyte')
+
+    # 获取数据集的原始数量和图像大小
+    with open(train_images_file, 'rb') as f:
+        magic, total_train_images, rows, cols = unpack('>IIII', f.read(16))
+    with open(test_images_file, 'rb') as f:
+        magic, total_test_images, rows, cols = unpack('>IIII', f.read(16))
+
+    # 计算要读取的数量
+    num_train_images = int(total_train_images * fraction)
+    num_test_images = int(total_test_images * fraction)
+
+    # 读取数据集
+    train_images = read_images(train_images_file, num_train_images, rows, cols)
+    train_labels = read_labels(train_labels_file, num_train_images).reshape(-1, 1)
+    test_images = read_images(test_images_file, num_test_images, rows, cols)
+    test_labels = read_labels(test_labels_file, num_test_images).reshape(-1, 1)
+
+    return train_images, train_labels, test_images, test_labels, (rows, cols)
+
 
 # 测试DLPP, LPP, PCA要查询的图像
 def test_image(i,train_labels, test_labels, query, eigenfaces, weight_matrix):
