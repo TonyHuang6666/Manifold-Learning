@@ -134,6 +134,21 @@ class Window(QMainWindow):
         self.dataset_path = QFileDialog.getExistingDirectory(self, "选择数据集文件夹", options=options)
         if self.dataset_path:
             self.dataset_path_label.setText(f"数据集路径: {self.dataset_path}")
+        if "ORL" in self.dataset_path:
+            self.train_test_split_label.setVisible(True)
+            self.train_test_split_combo.setVisible(True)
+            self.target_size_label.setVisible(True)
+            self.target_size_combo.setVisible(True)
+        elif "MNIST_ORG" in self.dataset_path:
+            self.train_test_split_label.setVisible(False)
+            self.train_test_split_combo.setVisible(False)
+            self.target_size_label.setVisible(False)
+            self.target_size_combo.setVisible(False)
+        elif "Reduced " in self.dataset_path:
+            self.train_test_split_label.setVisible(False)
+            self.train_test_split_combo.setVisible(False)
+            self.target_size_label.setVisible(True)
+            self.target_size_combo.setVisible(True)
 
     def execute_algorithm(self):
         try:
@@ -150,9 +165,9 @@ class Window(QMainWindow):
                 train_test_split_ratio = float(self.train_test_split_combo.currentText())
             #如果读取的是MNIST数据集，即self.dataset_path中含有"MNIST"字符串
             elif "MNIST_ORG" in self.dataset_path:
-               train_data, train_labels, test_data, test_labels, faceshape = read_mnist_dataset(self.dataset_path, fraction=0.01)
-               faceshape_temp = faceshape
-            #如果读取的是mini_mnist数据集，即self.dataset_path中含有"mini"字符串
+                train_data, train_labels, test_data, test_labels, faceshape = read_mnist_dataset(self.dataset_path, fraction=0.01)
+                faceshape_temp = faceshape
+            #如果读取的是mini_mnist数据集，即self.dataset_path中含有"Reduced"字符串
             elif "Reduced " in self.dataset_path:
                 train_data, train_labels, test_data, test_labels, faceshape = read_mini_minst_images(self.dataset_path, target_size=None)
                 faceshape_temp = faceshape
