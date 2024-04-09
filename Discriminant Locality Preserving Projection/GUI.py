@@ -88,7 +88,6 @@ class Window(QMainWindow):
         self.k_label = QLabel("请输入数据点最近邻数量k:")
         self.main_layout.addWidget(self.k_label)
         self.k_input = QLineEdit()
-        self.k_input.setText("5")  # 默认值为5
         self.main_layout.addWidget(self.k_input)
 
         self.t_label = QLabel("请输入热核参数t:")
@@ -122,12 +121,19 @@ class Window(QMainWindow):
         self.canvas = FigureCanvas(plt.figure())
         self.main_layout.addWidget(self.canvas)
 
-        # 初始化数据集路径变量
-        self.dataset_path = self.default_dataset_path
+        # 初始/默认数据集路径变量
         if "ORL" in self.default_dataset_path:
+            data, labels, faceshape = read_images(self.default_dataset_path, target_size=None)
+            train_test_split_ratio = float(self.train_test_split_combo.currentText())
+            train_data, train_labels, test_data, test_labels = train_test_split(data, labels, train_test_split_ratio=train_test_split_ratio)
+            num_classes = len(np.unique(train_labels))  # 类别数量
+            num_samples_per_class = train_data.shape[0] // num_classes  # 每个类别的样本数
+            k = int(num_samples_per_class/2)  # 推荐的 k 值为每个类别的样本数的一半且为整型数字
+
             self.mnist_split_label.setVisible(False)
             self.mnist_split_combo.setVisible(False)
             self.target_size_combo.setCurrentText("35%")  # 设置初始值为x%,即长宽均为原来的x%且取整
+            self.k_input.setText(str(k))  # 默认ORL数据集情况下推荐的 k 值
             self.t_input.setText("100000")  # 默认值为100000
 
 
@@ -147,6 +153,7 @@ class Window(QMainWindow):
         options = QFileDialog.Options()
         options |= QFileDialog.DontUseNativeDialog
         self.dataset_path = QFileDialog.getExistingDirectory(self, "选择数据集文件夹", options=options)
+        recommended_k = self.recommended_k_parameters()
         if self.dataset_path:
             self.dataset_path_label.setText(f"数据集路径: {self.dataset_path}")
         if "ORL" in self.dataset_path:
@@ -166,14 +173,45 @@ class Window(QMainWindow):
             self.mnist_split_label.setVisible(True)
             self.mnist_split_combo.setVisible(True)
             self.t_input.setText("1500")  # 默认值为1500
-        elif "Reduced " in self.dataset_path:
-            self.train_test_split_label.setVisible(False)
-            self.train_test_split_combo.setVisible(False)
-            self.target_size_label.setVisible(True)
-            self.target_size_combo.setVisible(True)
+        elif "Reduced" in self.dataset_path:
+            self.train_test_split_label.setVisible(True)
+            self.train_test_split_combo.setVisible(True)
+            self.target_size_label.setVisible(False)
+            self.target_size_combo.setVisible(False)
             self.mnist_split_label.setVisible(False)
             self.mnist_split_combo.setVisible(False)
             self.target_size_combo.setCurrentText("100%")  # 设置初始值为x%,即长宽均为原来的x%且取整
+            self.t_input.setText("100000")  # 默认值为100000
+        self.k_input.setText(str(recommended_k))# 推荐的 k 值
+
+    def recommended_k_parameters(self):
+        # 获取当前选择的数据集
+        selected_dataset = self.dataset_path
+        # 根据数据集推荐 k 的值
+        #如果读取的是ORL数据集，即self.dataset_path中含有"ORL"字符串
+        if "ORL" in self.dataset_path:
+            data, labels, faceshape = read_images(self.dataset_path, target_size=None)
+            train_test_split_ratio = float(self.train_test_split_combo.currentText())
+            train_data, train_labels, test_data, test_labels = train_test_split(data, labels, train_test_split_ratio=train_test_split_ratio)
+        #如果读取的是MNIST数据集，即self.dataset_path中含有"MNIST"字符串
+        elif "MNIST_ORG" in self.dataset_path:
+            fraction = float(self.mnist_split_combo.currentText())
+            train_data, train_labels, test_data, test_labels, faceshape = read_mnist_dataset(self.dataset_path, fraction=fraction)
+        #如果读取的是mini_mnist数据集，即self.dataset_path中含有"Reduced"字符串
+        elif "Reduced" in self.dataset_path:
+            from sklearn.datasets import load_digits
+            digits = load_digits()
+            data = digits.data
+            target = digits.target
+            train_test_split_ratio = float(self.train_test_split_combo.currentText())
+            train_data, train_labels, test_data, test_labels = train_test_split(data, target, train_test_split_ratio=train_test_split_ratio)
+        else:
+            raise ValueError(f"未知数据集: {selected_dataset}")
+        num_classes = len(np.unique(train_labels))  # 类别数量
+        num_samples_per_class = train_data.shape[0] // num_classes  # 每个类别的样本数
+        k = int(num_samples_per_class/2)  # 推荐的 k 值为每个类别的样本数的一半且为整型数字
+        return k
+        
 
     def execute_algorithm(self):
         try:
@@ -184,7 +222,8 @@ class Window(QMainWindow):
             method = self.method_combo.currentText()
             lpp_method = self.lpp_method_combo.currentText()
             faceshape_temp = None
-            
+            train_test_split_ratio = None
+
             #如果读取的是ORL数据集，即self.dataset_path中含有"ORL"字符串
             if "ORL" in self.dataset_path:
                 data_temp, labels_temp, faceshape_temp = read_images(self.dataset_path, target_size=None)
@@ -196,8 +235,9 @@ class Window(QMainWindow):
                 faceshape_temp = faceshape
             #如果读取的是mini_mnist数据集，即self.dataset_path中含有"Reduced"字符串
             elif "Reduced " in self.dataset_path:
-                train_data, train_labels, test_data, test_labels, faceshape = read_mini_minst_images(self.dataset_path, target_size=None)
-                faceshape_temp = faceshape
+                faceshape_temp = (8, 8)
+                train_test_split_ratio = float(self.train_test_split_combo.currentText())
+                # 8*8尺寸已经足够小，不需要缩放
 
             # 获取目标尺寸并按选择缩放
             target_size_str = self.target_size_combo.currentText()
@@ -222,7 +262,12 @@ class Window(QMainWindow):
                     fraction = float(self.mnist_split_combo.currentText())
                     train_data, train_labels, test_data, test_labels, faceshape = read_mnist_dataset(self.dataset_path, fraction=fraction)
                 if "Reduced " in self.dataset_path:
-                    train_data, train_labels, test_data, test_labels, faceshape = read_mini_minst_images(self.dataset_path, target_size=target_size)
+                    from sklearn.datasets import load_digits
+                    digits = load_digits()
+                    data = digits.data
+                    target = digits.target
+                    faceshape = (8, 8)
+                    train_data, train_labels, test_data, test_labels = train_test_split(data, target, train_test_split_ratio=train_test_split_ratio)
                 rate = 0.0  # 初始化识别率
                 if method == "DLPP":
                     # 调用 DLPP 函数并接收返回的中间变量信息
