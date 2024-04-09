@@ -34,6 +34,7 @@ class Window(QMainWindow):
             ratio_decimal = ratio / 100.0
             self.train_test_split_combo.addItem("{:.2f}".format(ratio_decimal))
         self.train_test_split_combo.setCurrentText("0.70")
+        self.train_test_split_combo.currentIndexChanged.connect(self.recommended_k_parameters)  # 连接方法选择框的信号与槽函数
         self.main_layout.addWidget(self.train_test_split_combo)
 
         #原版MNIST数据集的裁切
@@ -129,7 +130,6 @@ class Window(QMainWindow):
             num_classes = len(np.unique(train_labels))  # 类别数量
             num_samples_per_class = train_data.shape[0] // num_classes  # 每个类别的样本数
             k = int(num_samples_per_class/2)  # 推荐的 k 值为每个类别的样本数的一半且为整型数字
-
             self.mnist_split_label.setVisible(False)
             self.mnist_split_combo.setVisible(False)
             self.target_size_combo.setCurrentText("35%")  # 设置初始值为x%,即长宽均为原来的x%且取整
@@ -153,7 +153,6 @@ class Window(QMainWindow):
         options = QFileDialog.Options()
         options |= QFileDialog.DontUseNativeDialog
         self.dataset_path = QFileDialog.getExistingDirectory(self, "选择数据集文件夹", options=options)
-        recommended_k = self.recommended_k_parameters()
         if self.dataset_path:
             self.dataset_path_label.setText(f"数据集路径: {self.dataset_path}")
         if "ORL" in self.dataset_path:
@@ -180,9 +179,7 @@ class Window(QMainWindow):
             self.target_size_combo.setVisible(False)
             self.mnist_split_label.setVisible(False)
             self.mnist_split_combo.setVisible(False)
-            self.target_size_combo.setCurrentText("100%")  # 设置初始值为x%,即长宽均为原来的x%且取整
             self.t_input.setText("100000")  # 默认值为100000
-        self.k_input.setText(str(recommended_k))# 推荐的 k 值
 
     def recommended_k_parameters(self):
         # 获取当前选择的数据集
@@ -210,7 +207,8 @@ class Window(QMainWindow):
         num_classes = len(np.unique(train_labels))  # 类别数量
         num_samples_per_class = train_data.shape[0] // num_classes  # 每个类别的样本数
         k = int(num_samples_per_class/2)  # 推荐的 k 值为每个类别的样本数的一半且为整型数字
-        return k
+        self.k_input.setText(str(k))  # 推荐的 k 值
+        return 0
         
 
     def execute_algorithm(self):
@@ -234,7 +232,7 @@ class Window(QMainWindow):
                 train_data, train_labels, test_data, test_labels, faceshape = read_mnist_dataset(self.dataset_path, fraction=fraction)
                 faceshape_temp = faceshape
             #如果读取的是mini_mnist数据集，即self.dataset_path中含有"Reduced"字符串
-            elif "Reduced " in self.dataset_path:
+            elif "Reduced" in self.dataset_path:
                 faceshape_temp = (8, 8)
                 train_test_split_ratio = float(self.train_test_split_combo.currentText())
                 # 8*8尺寸已经足够小，不需要缩放
