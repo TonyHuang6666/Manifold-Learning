@@ -147,37 +147,42 @@ class Window(QMainWindow):
         self.move(x, y)
 
     def select_dataset(self):
-        options = QFileDialog.Options()
-        options |= QFileDialog.DontUseNativeDialog
-        self.dataset_path = QFileDialog.getExistingDirectory(self, "选择数据集文件夹", options=options)
-        if self.dataset_path:
-            self.dataset_path_label.setText(f"数据集路径: {self.dataset_path}")
-        if "ORL" in self.dataset_path:
-            self.train_test_split_label.setVisible(True)
-            self.train_test_split_combo.setVisible(True)
-            self.target_size_label.setVisible(True)
-            self.target_size_combo.setVisible(True)
-            self.mnist_split_label.setVisible(False)
-            self.mnist_split_combo.setVisible(False)
-            self.target_size_combo.setCurrentText("35%")  # 设置初始值为x%,即长宽均为原来的x%且取整
-            self.t_input.setText("100000")  # 默认值为100000
-        elif "MNIST_ORG" in self.dataset_path:
-            self.train_test_split_label.setVisible(False)
-            self.train_test_split_combo.setVisible(False)
-            self.target_size_label.setVisible(False)
-            self.target_size_combo.setVisible(False)
-            self.mnist_split_label.setVisible(True)
-            self.mnist_split_combo.setVisible(True)
-            self.t_input.setText("1500")  # 默认值为1500
-        elif "mini" in self.dataset_path:
-            self.train_test_split_label.setVisible(True)
-            self.train_test_split_combo.setVisible(True)
-            self.target_size_label.setVisible(False)
-            self.target_size_combo.setVisible(False)
-            self.mnist_split_label.setVisible(False)
-            self.mnist_split_combo.setVisible(False)
-            self.t_input.setText("100000")  # 默认值为100000
-        self.recommended_k_parameters()
+        try:
+            options = QFileDialog.Options()
+            options |= QFileDialog.DontUseNativeDialog
+            self.dataset_path = QFileDialog.getExistingDirectory(self, "选择数据集文件夹", options=options)
+            if self.dataset_path:
+                self.dataset_path_label.setText(f"数据集路径: {self.dataset_path}")
+            if "ORL" in self.dataset_path:
+                self.train_test_split_label.setVisible(True)
+                self.train_test_split_combo.setVisible(True)
+                self.target_size_label.setVisible(True)
+                self.target_size_combo.setVisible(True)
+                self.mnist_split_label.setVisible(False)
+                self.mnist_split_combo.setVisible(False)
+                self.target_size_combo.setCurrentText("35%")  # 设置初始值为x%,即长宽均为原来的x%且取整
+                self.t_input.setText("100000")  # 默认值为100000
+            elif "MNIST_ORG" in self.dataset_path:
+                self.train_test_split_label.setVisible(False)
+                self.train_test_split_combo.setVisible(False)
+                self.target_size_label.setVisible(False)
+                self.target_size_combo.setVisible(False)
+                self.mnist_split_label.setVisible(True)
+                self.mnist_split_combo.setVisible(True)
+                self.t_input.setText("1500")  # 默认值为1500
+            elif "mini" in self.dataset_path:
+                self.train_test_split_label.setVisible(True)
+                self.train_test_split_combo.setVisible(True)
+                self.target_size_label.setVisible(False)
+                self.target_size_combo.setVisible(False)
+                self.mnist_split_label.setVisible(False)
+                self.mnist_split_combo.setVisible(False)
+                self.t_input.setText("100000")  # 默认值为100000
+            self.recommended_k_parameters()
+        except Exception as e:
+            # 弹出错误窗口显示报错原因
+            error_message = f"错误类型: {type(e).__name__}\n错误信息: {str(e)}"
+            QMessageBox.critical(self, "错误", error_message)
 
     def recommended_k_parameters(self):
         # 获取当前选择的数据集
