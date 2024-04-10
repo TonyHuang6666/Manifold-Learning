@@ -140,7 +140,7 @@ def LPP(Data, d, method, k, t):
     Laplacian_matrix = Degree_matrix - Weight_matrix
     objective_value = np.dot(np.dot(Data, Laplacian_matrix), Data.T)  # 计算目标函数
     # eigs用于稀疏矩阵，eigh用于稠密矩阵
-    eigenvalues, eigenvectors = eig(objective_value)
+    eigenvalues, eigenvectors = eigs(objective_value, k=d+1)
     sorted_indices = np.argsort(eigenvalues.real)
     selected_indices = sorted_indices[1:d + 1]
     selected_eigenvectors = eigenvectors.real[:, selected_indices]

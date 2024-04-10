@@ -61,7 +61,6 @@ class Window(QMainWindow):
         self.d_label = QLabel("请输入降维后的维度d:")
         self.main_layout.addWidget(self.d_label)
         self.d_input = QLineEdit()
-        self.d_input.setText("70")  # 默认值为70
         self.main_layout.addWidget(self.d_input)
 
         # 选择降维方法
@@ -133,6 +132,7 @@ class Window(QMainWindow):
             self.mnist_split_combo.setVisible(False)
             self.target_size_combo.setCurrentText("35%")  # 设置初始值为x%,即长宽均为原来的x%且取整
             self.t_input.setText("100000")  # 默认值为100000
+            self.d_input.setText("70")  # 默认值为70
 
 
     def center_on_screen(self):
@@ -163,6 +163,7 @@ class Window(QMainWindow):
                 self.mnist_split_combo.setVisible(False)
                 self.target_size_combo.setCurrentText("35%")  # 设置初始值为x%,即长宽均为原来的x%且取整
                 self.t_input.setText("100000")  # 默认值为100000
+                self.d_input.setText("70")  # 默认值为70
             elif "MNIST_ORG" in self.dataset_path:
                 self.train_test_split_label.setVisible(False)
                 self.train_test_split_combo.setVisible(False)
@@ -171,6 +172,7 @@ class Window(QMainWindow):
                 self.mnist_split_label.setVisible(True)
                 self.mnist_split_combo.setVisible(True)
                 self.t_input.setText("1500")  # 默认值为1500
+                self.d_input.setText("70")  # 默认值为70
             elif "mini" in self.dataset_path:
                 self.train_test_split_label.setVisible(True)
                 self.train_test_split_combo.setVisible(True)
@@ -179,6 +181,7 @@ class Window(QMainWindow):
                 self.mnist_split_label.setVisible(False)
                 self.mnist_split_combo.setVisible(False)
                 self.t_input.setText("100000")  # 默认值为100000
+                self.d_input.setText("20")  # 默认值为70
             self.recommended_k_parameters()
         except Exception as e:
             # 弹出错误窗口显示报错原因
