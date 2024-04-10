@@ -4,6 +4,8 @@ from matplotlib import pyplot as plt
 from PyQt5.QtWidgets import QApplication, QMainWindow, QLabel, QVBoxLayout, QWidget, QPushButton, QFileDialog, QLineEdit, QComboBox, QTextEdit, QMessageBox, QDesktopWidget
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from Algorithms import *
+import warnings
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 class Window(QMainWindow):
     def __init__(self):
@@ -86,7 +88,7 @@ class Window(QMainWindow):
         self.lpp_method_combo.currentIndexChanged.connect(self.toggle_parameters_visibility)  # 连接方法选择框的信号与槽函数
         self.main_layout.addWidget(self.lpp_method_combo)
 
-        self.k_label = QLabel("请输入数据点最近邻数量k:")
+        self.k_label = QLabel("请输入数据点最近邻数量k(默认值为单类别样本数的一半):") 
         self.main_layout.addWidget(self.k_label)
         self.k_input = QLineEdit()
         self.main_layout.addWidget(self.k_input)
@@ -125,16 +127,10 @@ class Window(QMainWindow):
         # 初始/默认数据集路径变量
         if "ORL" in self.default_dataset_path:
             self.dataset_path = self.default_dataset_path
-            data, labels, faceshape = read_images(self.default_dataset_path, target_size=None)
-            train_test_split_ratio = float(self.train_test_split_combo.currentText())
-            train_data, train_labels, test_data, test_labels = train_test_split(data, labels, train_test_split_ratio=train_test_split_ratio)
-            num_classes = len(np.unique(train_labels))  # 类别数量
-            num_samples_per_class = train_data.shape[0] // num_classes  # 每个类别的样本数
-            k = int(num_samples_per_class/2)  # 推荐的 k 值为每个类别的样本数的一半且为整型数字
+            self.recommended_k_parameters()
             self.mnist_split_label.setVisible(False)
             self.mnist_split_combo.setVisible(False)
             self.target_size_combo.setCurrentText("35%")  # 设置初始值为x%,即长宽均为原来的x%且取整
-            self.k_input.setText(str(k))  # 默认ORL数据集情况下推荐的 k 值
             self.t_input.setText("100000")  # 默认值为100000
 
 
@@ -173,7 +169,7 @@ class Window(QMainWindow):
             self.mnist_split_label.setVisible(True)
             self.mnist_split_combo.setVisible(True)
             self.t_input.setText("1500")  # 默认值为1500
-        elif "Reduced" in self.dataset_path:
+        elif "mini" in self.dataset_path:
             self.train_test_split_label.setVisible(True)
             self.train_test_split_combo.setVisible(True)
             self.target_size_label.setVisible(False)
@@ -181,6 +177,7 @@ class Window(QMainWindow):
             self.mnist_split_label.setVisible(False)
             self.mnist_split_combo.setVisible(False)
             self.t_input.setText("100000")  # 默认值为100000
+        self.recommended_k_parameters()
 
     def recommended_k_parameters(self):
         # 获取当前选择的数据集
@@ -196,7 +193,7 @@ class Window(QMainWindow):
             fraction = float(self.mnist_split_combo.currentText())
             train_data, train_labels, test_data, test_labels, faceshape = read_mnist_dataset(self.dataset_path, fraction=fraction)
         #如果读取的是mini_mnist数据集，即self.dataset_path中含有"Reduced"字符串
-        elif "Reduced" in self.dataset_path:
+        elif "mini" in self.dataset_path:
             from sklearn.datasets import load_digits
             digits = load_digits()
             data = digits.data
@@ -233,7 +230,7 @@ class Window(QMainWindow):
                 train_data, train_labels, test_data, test_labels, faceshape = read_mnist_dataset(self.dataset_path, fraction=fraction)
                 faceshape_temp = faceshape
             #如果读取的是mini_mnist数据集，即self.dataset_path中含有"Reduced"字符串
-            elif "Reduced" in self.dataset_path:
+            elif "mini" in self.dataset_path:
                 faceshape_temp = (8, 8)
                 train_test_split_ratio = float(self.train_test_split_combo.currentText())
                 # 8*8尺寸已经足够小，不需要缩放
@@ -260,7 +257,7 @@ class Window(QMainWindow):
                 if "MNIST_ORG" in self.dataset_path:
                     fraction = float(self.mnist_split_combo.currentText())
                     train_data, train_labels, test_data, test_labels, faceshape = read_mnist_dataset(self.dataset_path, fraction=fraction)
-                if "Reduced " in self.dataset_path:
+                if "mini" in self.dataset_path:
                     from sklearn.datasets import load_digits
                     digits = load_digits()
                     data = digits.data
