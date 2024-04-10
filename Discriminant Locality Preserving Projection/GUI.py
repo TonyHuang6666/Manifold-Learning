@@ -124,6 +124,7 @@ class Window(QMainWindow):
 
         # 初始/默认数据集路径变量
         if "ORL" in self.default_dataset_path:
+            self.dataset_path = self.default_dataset_path
             data, labels, faceshape = read_images(self.default_dataset_path, target_size=None)
             train_test_split_ratio = float(self.train_test_split_combo.currentText())
             train_data, train_labels, test_data, test_labels = train_test_split(data, labels, train_test_split_ratio=train_test_split_ratio)
