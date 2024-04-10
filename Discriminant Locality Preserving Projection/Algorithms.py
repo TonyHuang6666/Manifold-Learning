@@ -255,7 +255,7 @@ def DLPP(train_data, train_labels, d, lpp_method, k, t):
 
     # Step 6: 求解广义特征值问题的特征值和特征向量
     # eigs用于稀疏矩阵，eigh用于稠密矩阵
-    eigenvalues, eigenvectors = eig(objective_value)
+    eigenvalues, eigenvectors = eigs(objective_value, k=d+1)
     sorted_indices = np.argsort(eigenvalues.real)
     selected_indices = sorted_indices[1:d + 1]  
     selected_eigenvectors = eigenvectors.real[:, selected_indices] 
