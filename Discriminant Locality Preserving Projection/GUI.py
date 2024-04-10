@@ -80,11 +80,11 @@ class Window(QMainWindow):
         self.lpp_method_label = QLabel("请选择邻域选择方法:")
         self.main_layout.addWidget(self.lpp_method_label)
         self.lpp_method_combo = QComboBox()
-        self.lpp_method_combo.addItem("knn")
-        self.lpp_method_combo.addItem("epsilon")
-        self.lpp_method_combo.addItem("knn_epsilon")
-        self.lpp_method_combo.addItem("adaptive_epsilon")
-        self.lpp_method_combo.setCurrentText("knn")  # 设置初始值为当前选择
+        self.lpp_method_combo.addItem("KNN")
+        self.lpp_method_combo.addItem("Average-KNN-distances-based epsilon")
+        self.lpp_method_combo.addItem("KNN + Adaptive epsilon")
+        self.lpp_method_combo.addItem("Adaptive epsilon")
+        self.lpp_method_combo.setCurrentText("KNN")  # 设置初始值为当前选择
         self.lpp_method_combo.currentIndexChanged.connect(self.toggle_parameters_visibility)  # 连接方法选择框的信号与槽函数
         self.main_layout.addWidget(self.lpp_method_combo)
 
@@ -429,7 +429,7 @@ class Window(QMainWindow):
             self.lpp_method_label.setVisible(False)
             self.lpp_method_combo.setVisible(False)
         elif selected_method == "LPP": 
-            if selected_lpp_method == "adaptive_epsilon":
+            if selected_lpp_method == "Adaptive epsilon":
                 self.k_label.setVisible(False)
                 self.k_input.setVisible(False)
             else:
@@ -442,7 +442,7 @@ class Window(QMainWindow):
             self.lpp_method_label.setVisible(True)
             self.lpp_method_combo.setVisible(True)
         elif selected_method == "DLPP":
-            if selected_lpp_method == "adaptive_epsilon":
+            if selected_lpp_method == "Adaptive epsilon":
                 self.k_label.setVisible(False)
                 self.k_input.setVisible(False)
             else:

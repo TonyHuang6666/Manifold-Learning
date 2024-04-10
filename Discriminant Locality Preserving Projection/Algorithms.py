@@ -49,15 +49,29 @@ def compute_adaptive_neighbors(Data):
     return adaptive_neighbors, sorted_distances, distances
 
 # 根据adaptive_neighbors中每一行的邻居数量和sorted_distances对每个数据点构建epsilon graph
-def adaptive_epsilon_graph(Data):
+def adaptive_epsilon_graph(Data, method, k):
     adaptive_neighbors, sorted_distances, distances = compute_adaptive_neighbors(Data)
     n = Data.shape[1]  
-    adaptive_epsilon_adjacency_matrix = np.zeros((n, n))  
-    for i in range(n):
-        indices = np.argsort(sorted_distances[i])[:int(adaptive_neighbors[i])]
-        adaptive_epsilon_adjacency_matrix[i, indices] = 1
-        adaptive_epsilon_adjacency_matrix[indices, i] = 1
-    return adaptive_epsilon_adjacency_matrix, distances
+    adaptive_epsilon_adjacency_matrix = np.zeros((n, n)) 
+    if method == "Adaptive epsilon": # 计算自适应epsilon graph，不管k值
+        for i in range(n):
+            indices = np.argsort(sorted_distances[i])[:int(adaptive_neighbors[i])]
+            adaptive_epsilon_adjacency_matrix[i, indices] = 1
+            adaptive_epsilon_adjacency_matrix[indices, i] = 1
+        return adaptive_epsilon_adjacency_matrix, distances
+    elif method == "KNN + Adaptive epsilon": # 以k值为邻居数的阈值，小于k值的邻居数使用adaptive epsilon graph，大于k值的邻居数使用knn graph
+        for i in range(n):
+            if adaptive_neighbors[i] <= k:
+                indices = np.argsort(sorted_distances[i])[:int(adaptive_neighbors[i])]
+                adaptive_epsilon_adjacency_matrix[i, indices] = 1
+                adaptive_epsilon_adjacency_matrix[indices, i] = 1
+            else:
+                indices = np.argsort(distances[i])[:k]
+                adaptive_epsilon_adjacency_matrix[i, indices] = 1
+                adaptive_epsilon_adjacency_matrix[indices, i] = 1
+        return adaptive_epsilon_adjacency_matrix, distances
+
+
 #####################计算自适应epsilon graph####################
 
 #####################计算经典knn graph####################
@@ -65,7 +79,7 @@ def knn_graph(Data, method, k):
     n = Data.shape[1]  
     knn_adjacency_matrix = np.zeros((n, n))  
     distances = np.sqrt(np.sum((Data.T[:, :, None] - Data.T[:, :, None].T) ** 2, axis=1))
-    if method == 'epsilon':
+    if method == "Average-KNN-distances-based epsilon":
         return knn_adjacency_matrix, distances
     indices = np.argsort(distances, axis=1)[:, 1:k+1]
     for i in range(n):
@@ -89,21 +103,25 @@ def compute_knn_average_radius(sorted_distances, k):
 
 def compute_neighborhood_matrix(Data, method, k):
     n = Data.shape[1]  # 获取样本点的数量
-    distances = np.zeros((n, n))
-    sorted_distances = np.zeros((n, n))
-    if method == 'knn':
+    if method == "KNN":
         knn_adjacency_matrix, distances = knn_graph(Data, method, k)
         return knn_adjacency_matrix, distances
-    elif method == 'adaptive_epsilon':
-        adaptive_epsilon_adjacency_matrix, distances = adaptive_epsilon_graph(Data)
+    elif method == "Adaptive epsilon":
+        adaptive_epsilon_adjacency_matrix, distances = adaptive_epsilon_graph(Data, method, k)
         return adaptive_epsilon_adjacency_matrix, distances
-    adjacency_matrix = np.zeros((n, n))
-    radius = compute_knn_average_radius(sorted_distances, k)
-    for i in range(n):
-        neighbors = np.where(distances[:, i] <= radius[i])[0]  
-        adjacency_matrix[i, neighbors] = 1
-        adjacency_matrix[neighbors, i] = 1
-    return adjacency_matrix, distances
+    elif method == "Average-KNN-distances-based epsilon":
+        epsilon_adjacency_matrix = np.zeros((n, n))
+        knn_adjacency_matrix, distances = knn_graph(Data, method, k)
+        sorted_distances = np.sort(distances, axis=1)
+        radius = compute_knn_average_radius(sorted_distances, k)
+        for i in range(n):
+            neighbors = np.where(distances[:, i] <= radius[i])[0]  
+            epsilon_adjacency_matrix[i, neighbors] = 1
+            epsilon_adjacency_matrix[neighbors, i] = 1
+        return epsilon_adjacency_matrix, distances
+    elif method == "KNN + Adaptive epsilon":
+        epsilon_adjacency_matrix, distances = adaptive_epsilon_graph(Data, method, k)
+        return epsilon_adjacency_matrix, distances
 
 def construct_weight_matrix(Data, method, k,t):
     n = Data.shape[1]  
@@ -116,22 +134,8 @@ def construct_weight_matrix(Data, method, k,t):
     Weight_matrix += np.exp(-distances ** 2 / t)
     return Weight_matrix
 
-def Best_weight_matrix(Data, k, t, weight_knn, weight_epsilon):
-    n = len(Data)
-    best_weight_matrix = np.zeros((n, n))
-    # 计算k最近邻矩阵的权重矩阵和 epsilon 邻域矩阵
-    knn_weight_matrix = construct_weight_matrix(Data, 'knn', k, t)
-    epsilon_weight_matrix = construct_weight_matrix(Data, 'epsilon', k, t)
-    
-    # 加权平均计算
-    best_weight_matrix = weight_knn * knn_weight_matrix + weight_epsilon * epsilon_weight_matrix
-    return best_weight_matrix
-
 def LPP(Data, d, method, k, t):
-    if method == 'knn_epsilon':
-        Weight_matrix = Best_weight_matrix(Data, k, t, 0.5, 0.5)
-    else:
-        Weight_matrix = construct_weight_matrix(Data, method, k, t)
+    Weight_matrix = construct_weight_matrix(Data, method, k, t)
     Degree_matrix = np.diag(np.sum(Weight_matrix, axis=1))
     Laplacian_matrix = Degree_matrix - Weight_matrix
     objective_value = np.dot(np.dot(Data, Laplacian_matrix), Data.T)  # 计算目标函数
@@ -214,10 +218,7 @@ def MLDA(train_data, train_labels, faceshape, d):
 # 计算每个类别的权重矩阵，度矩阵和拉普拉斯矩阵
 def DLPP_LPP(train_data, method, k, t):
     Data = train_data.T
-    if method == 'knn_epsilon':
-        Weight_matrix = Best_weight_matrix(Data, k, t, 0.5, 0.5)
-    else:
-        Weight_matrix = construct_weight_matrix(Data, method, k, t)
+    Weight_matrix = construct_weight_matrix(Data, method, k, t)
     Degree_matrix = np.diag(np.sum(Weight_matrix, axis=1))
     Laplacian_matrix = Degree_matrix - Weight_matrix
     return Laplacian_matrix, Data
