@@ -92,6 +92,7 @@ class Window(QMainWindow):
         self.main_layout.addWidget(self.k_label)
         self.k_input = QLineEdit()
         self.main_layout.addWidget(self.k_input)
+        self.recommended_k = 0
 
         self.t_label = QLabel("请输入热核参数t:")
         self.main_layout.addWidget(self.t_label)
@@ -462,8 +463,6 @@ class Window(QMainWindow):
             self.d_input.setVisible(True)
             self.lpp_method_label.setVisible(False)
             self.lpp_method_combo.setVisible(False)
-        else:
-            raise ValueError(f"未知方法: {selected_method}")
 
 if __name__ == "__main__":
     app = QApplication(argv)
