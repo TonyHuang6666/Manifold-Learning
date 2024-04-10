@@ -326,49 +326,7 @@ def train_test_split(data, labels, train_test_split_ratio):
     
     return train_data, train_labels, test_data, test_labels
 
-
-def read_mini_minst_images(dataset_dir, target_size=None):
-    train_data = []  # 存储训练图像数据的列表
-    train_labels = []  # 存储训练标签的列表
-    test_data = []  # 存储测试图像数据的列表
-    test_labels = []  # 存储测试标签的列表
-    faceshape = []  # 存储图像形状
-
-    # 读取训练集
-    for class_dir in range(10):  # 遍历10个类别文件夹
-        class_path = path.join(dataset_dir, 'Reduced Training data', str(class_dir))  # 类别文件夹路径
-        for file_name in listdir(class_path):  # 遍历每个类别文件夹中的图像文件
-            file_path = path.join(class_path, file_name)  # 图像文件路径
-            img = imread(file_path, IMREAD_GRAYSCALE)  # 读取灰度图像
-            # 如果指定了目标尺寸，则缩放图像
-            if target_size is not None:
-                img = resize(img, target_size, interpolation=INTER_AREA)
-            # 读取第一张灰度图像的大小作为图片形状
-            if not faceshape:
-                faceshape = img.shape
-            train_data.append(img.flatten())  # 将图像展平并添加到训练数据列表中
-            train_labels.append(int(class_dir))  # 将类别标签添加到训练标签列表中
-
-    # 读取测试集
-    for class_dir in range(10):  # 遍历10个类别文件夹
-        class_path = path.join(dataset_dir, 'Reduced Testing data', str(class_dir))  # 类别文件夹路径
-        for file_name in listdir(class_path):  # 遍历每个类别文件夹中的图像文件
-            file_path = path.join(class_path, file_name)  # 图像文件路径
-            img = imread(file_path, IMREAD_GRAYSCALE)  # 读取灰度图像
-            # 如果指定了目标尺寸，则缩放图像
-            if target_size is not None:
-                img = resize(img, target_size, interpolation=INTER_AREA)
-            test_data.append(img.flatten())  # 将图像展平并添加到测试数据列表中
-            test_labels.append(int(class_dir))  # 将类别标签添加到测试标签列表中
-
-    # 将列表转换为numpy数组并返回
-    train_images = np.array(train_data)
-    train_labels = np.array(train_labels).reshape(-1, 1)
-    test_images = np.array(test_data)
-    test_labels = np.array(test_labels).reshape(-1, 1)
-
-    return train_images, train_labels, test_images, test_labels, faceshape
-
+# 读取MNIST数据集
 def read_mnist_dataset(dataset_dir, fraction=0.2):
     def read_images(images_file, num_images, rows, cols):
         with open(images_file, 'rb') as f:
