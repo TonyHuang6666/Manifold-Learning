@@ -285,7 +285,8 @@ def read_images(dataset_dir, target_size=None):
             labels.append(int(class_dir))  # 将类别标签添加到标签列表中
     return np.array(data), np.array(labels).reshape(-1, 1), faceshape  # 返回图像数据和标签
 
-# 训练集和测试集划分
+"""
+# 训练集和测试集划分(随机划分)
 def train_test_split(data, labels, train_test_split_ratio):
     num_samples = data.shape[0]  # 总样本数
     train_samples = int(num_samples * train_test_split_ratio)  # 训练集样本数
@@ -303,6 +304,28 @@ def train_test_split(data, labels, train_test_split_ratio):
     test_labels = labels[train_samples:]
     
     return train_data, train_labels, test_data, test_labels
+"""
+
+# 训练集和测试集划分(按顺序划分)
+def train_test_split(data, labels, train_test_split_ratio):
+    num_samples = data.shape[0]  # 总样本数
+    num_classes = len(np.unique(labels))  # 类别数
+    train_samples_per_class = int(train_test_split_ratio * num_samples / num_classes)  # 每个类别的训练样本数
+    
+    train_indices = []
+    test_indices = []
+    for i in range(1, num_classes + 1):  # 对每个类别
+        class_indices = np.where(labels == i)[0]  # 获取当前类别的索引
+        train_indices.extend(class_indices[:train_samples_per_class])  # 将前面部分作为训练集
+        test_indices.extend(class_indices[train_samples_per_class:])  # 将后面部分作为测试集
+    
+    train_data = data[train_indices]
+    train_labels = labels[train_indices]
+    test_data = data[test_indices]
+    test_labels = labels[test_indices]
+    
+    return train_data, train_labels, test_data, test_labels
+
 
 def read_mini_minst_images(dataset_dir, target_size=None):
     train_data = []  # 存储训练图像数据的列表
