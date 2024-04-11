@@ -22,7 +22,7 @@ class Window(QMainWindow):
         # 数据集的选择与划分
         self.dataset_label = QLabel("请选择数据集文件夹:")
         self.main_layout.addWidget(self.dataset_label)
-        self.default_dataset_path = "C:\\Users\Tony\\OneDrive - email.szu.edu.cn\\Manifold Learning\\Discriminant Locality Preserving Projection\\mini MNIST"
+        self.default_dataset_path = "C:\\Users\Tony\\OneDrive - email.szu.edu.cn\\Manifold Learning\\Discriminant Locality Preserving Projection\\ORL"
         self.dataset_path_label = QLabel(f"数据集默认路径: {self.default_dataset_path}")  # 显示默认数据集文件夹的路径
         self.main_layout.addWidget(self.dataset_path_label)
         self.dataset_button = QPushButton("选择其他数据集")
@@ -319,7 +319,8 @@ class Window(QMainWindow):
                     # 将最后一次运行的信息显示在文本编辑框中
                     if _ == runs - 1:
                         self.info_textedit.clear()
-                        self.show_info("训练数据集形状:", train_data.T.shape)
+                        self.show_info("初始训练数据集形状:", train_data.shape)
+                        self.show_info("PCA提取的主成分形状/训练数据集形状:", PCA_eigenvectors.T.shape)
                         self.show_info("类平均图像形状:", F.shape)
                         self.show_info("拉普拉斯矩阵形状:", L.shape)
                         self.show_info("类权重矩阵形状:", B.shape)
