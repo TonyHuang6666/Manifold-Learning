@@ -313,7 +313,7 @@ class Window(QMainWindow):
                     # 调用 DLPP 函数并接收返回的中间变量信息
                     PCA_eigenvectors = PCA(train_data, p)
                     PCA_weight_matrix = PCA_eigenvectors.T @ train_data.T
-                    F, L, B, objective_value, eigenvectors = DLPP(PCA_eigenvectors, train_labels, d, lpp_method, k, t)
+                    F, L, B, objective_value, eigenvectors = DLPP(PCA_eigenvectors, train_data, train_labels, p, d, lpp_method, k, t)
                     weight_matrix = eigenvectors.T @ PCA_weight_matrix
                     test_data = test_data @ PCA_eigenvectors @ eigenvectors
                     # 将最后一次运行的信息显示在文本编辑框中

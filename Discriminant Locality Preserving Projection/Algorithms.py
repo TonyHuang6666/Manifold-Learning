@@ -221,15 +221,16 @@ def DLPP_LPP(train_data, method, d, k, t):
     return Laplacian_matrix, train_data
 
 # 计算每个类别的均值矩阵
-def DLPP_MLDA(train_data, train_labels, d):
+def DLPP_MLDA(train_data, train_labels):
     classes_means = compute_classes_mean_matrix(train_data, train_labels)
     return classes_means.T
 
-def DLPP(train_data, train_labels, d, lpp_method, k, t):
+def DLPP(denoised_train_data, train_data, train_labels, p, d, lpp_method, k, t):
     # Step 1: 使用MLDA进行特征提取
-    F = DLPP_MLDA(train_data, train_labels, d)
+    train_data_by_pca = PCA(train_data.T, p)
+    F = DLPP_MLDA(train_data_by_pca, train_labels)
     # Step 2: 使用LPP进行特征提取
-    L, X = DLPP_LPP(train_data, lpp_method, d, k, t)
+    L, X = DLPP_LPP(denoised_train_data, lpp_method, d, k, t)
     # Step 3: 计算权重矩阵B
     num_classes = len(np.unique(train_labels))  # 计算训练集中的类别数
     B = np.zeros((num_classes, num_classes))  # 初始化权重矩阵B
