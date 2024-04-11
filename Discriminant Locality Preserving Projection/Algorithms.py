@@ -80,7 +80,7 @@ def knn_graph(Data, method, k):
     knn_adjacency_matrix = np.zeros((n, n))  
     distances = np.sqrt(np.sum((Data.T[:, :, None] - Data.T[:, :, None].T) ** 2, axis=1))
     if method == "Average-KNN-distances-based epsilon":
-        return knn_adjacency_matrix, distances
+        return distances
     indices = np.argsort(distances, axis=1)[:, 1:k+1]
     for i in range(n):
         knn_adjacency_matrix[i, indices[i]] = 1
@@ -111,7 +111,7 @@ def compute_neighborhood_matrix(Data, method, k):
         return adaptive_epsilon_adjacency_matrix, distances
     elif method == "Average-KNN-distances-based epsilon":
         epsilon_adjacency_matrix = np.zeros((n, n))
-        knn_adjacency_matrix, distances = knn_graph(Data, method, k)
+        distances = knn_graph(Data, method, k)
         sorted_distances = np.sort(distances, axis=1)
         radius = compute_knn_average_radius(sorted_distances, k)
         for i in range(n):
