@@ -10,22 +10,18 @@ from struct import unpack
 
 ###############################PCA算法函数######################################
 # PCA实现函数
-def PCA(X, n_components):
+def PCA(X, d):
     # 计算数据矩阵的均值
     mean = np.mean(X, axis=0)
     # 中心化数据矩阵
     X_centered = X - mean
     # 计算数据矩阵的协方差矩阵
     covariance_matrix = np.cov(X_centered, rowvar=False)
-    # 计算协方差矩阵的特征值和特征向量
-    eigenvalues, eigenvectors = np.linalg.eigh(covariance_matrix)
-    # 对特征向量按特征值从大到小排序
-    sorted_indices = np.argsort(eigenvalues)[::-1]
-    sorted_eigenvectors = eigenvectors[:, sorted_indices]
-    # 选取前n_components个特征向量
-    principal_components = sorted_eigenvectors[:, :n_components]
-    # 返回投影矩阵和均值向量
-    return principal_components, mean
+    eigenvalues, eigenvectors = eigs(covariance_matrix, k=d+1)
+    sorted_indices = np.argsort(eigenvalues.real)
+    selected_indices = sorted_indices[1:d + 1]
+    selected_eigenvectors = eigenvectors.real[:, selected_indices]
+    return selected_eigenvectors    
 
 ###############################LPP算法函数######################################
 #####################计算自适应epsilon graph####################
@@ -135,10 +131,11 @@ def construct_weight_matrix(Data, method, k,t):
     return Weight_matrix
 
 def LPP(Data, d, method, k, t):
-    Weight_matrix = construct_weight_matrix(Data, method, k, t)
+    Data_by_PCA = PCA(Data.T, d)
+    Weight_matrix = construct_weight_matrix(Data_by_PCA, method, k, t)
     Degree_matrix = np.diag(np.sum(Weight_matrix, axis=1))
     Laplacian_matrix = Degree_matrix - Weight_matrix
-    objective_value = np.dot(np.dot(Data, Laplacian_matrix), Data.T)  # 计算目标函数
+    objective_value = np.dot(np.dot(Data_by_PCA, Laplacian_matrix), Data_by_PCA.T)  # 计算目标函数
     # eigs用于稀疏矩阵，eigh用于稠密矩阵
     eigenvalues, eigenvectors = eigs(objective_value, k=d+1)
     sorted_indices = np.argsort(eigenvalues.real)
@@ -216,12 +213,12 @@ def MLDA(train_data, train_labels, faceshape, d):
 ###############################DLPP算法函数######################################
 
 # 计算每个类别的权重矩阵，度矩阵和拉普拉斯矩阵
-def DLPP_LPP(train_data, method, k, t):
-    Data = train_data.T
-    Weight_matrix = construct_weight_matrix(Data, method, k, t)
+def DLPP_LPP(train_data, method, d, k, t):
+    Data_by_PCA = PCA(train_data, d)
+    Weight_matrix = construct_weight_matrix(Data_by_PCA, method, k, t)
     Degree_matrix = np.diag(np.sum(Weight_matrix, axis=1))
     Laplacian_matrix = Degree_matrix - Weight_matrix
-    return Laplacian_matrix, Data
+    return Laplacian_matrix, Data_by_PCA
 
 # 计算每个类别的均值矩阵
 def DLPP_MLDA(train_data, train_labels, d):
@@ -232,7 +229,7 @@ def DLPP(train_data, train_labels, d, lpp_method, k, t):
     # Step 1: 使用MLDA进行特征提取
     F = DLPP_MLDA(train_data, train_labels, d)
     # Step 2: 使用LPP进行特征提取
-    L, X = DLPP_LPP(train_data, lpp_method, k, t)
+    L, X = DLPP_LPP(train_data, lpp_method, d, k, t)
     # Step 3: 计算权重矩阵B
     num_classes = len(np.unique(train_labels))  # 计算训练集中的类别数
     B = np.zeros((num_classes, num_classes))  # 初始化权重矩阵B

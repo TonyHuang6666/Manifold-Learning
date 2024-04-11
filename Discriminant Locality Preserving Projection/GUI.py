@@ -351,14 +351,13 @@ class Window(QMainWindow):
 
                 elif method == "PCA":
                     # 调用 PCA 函数并接收返回的中间变量信息
-                    eigenfaces, overall_mean = PCA(train_data, d)
+                    eigenfaces = PCA(train_data, d)
                     weight_matrix = eigenfaces.T @ train_data.T
                     # 将最后一次运行的信息显示在文本编辑框中
                     if _ == runs - 1:
                         # 将信息显示在文本编辑框中
                         self.info_textedit.clear()
                         self.show_info("训练数据集形状:", train_data.T.shape)
-                        self.show_info("平均图像形状:", overall_mean.shape)
                         self.show_info("特征脸形状:", eigenfaces.shape)
                         self.show_info("权重矩阵形状:", weight_matrix.shape)
                     # 识别率统计
