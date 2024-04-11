@@ -131,7 +131,7 @@ def construct_weight_matrix(Data, method, k,t):
     return Weight_matrix
 
 def LPP(Data, d, method, k, t):
-    Data_by_PCA = PCA(Data.T, d)
+    Data_by_PCA = PCA(Data.T, d+1)
     Weight_matrix = construct_weight_matrix(Data_by_PCA, method, k, t)
     Degree_matrix = np.diag(np.sum(Weight_matrix, axis=1))
     Laplacian_matrix = Degree_matrix - Weight_matrix
@@ -214,7 +214,7 @@ def MLDA(train_data, train_labels, faceshape, d):
 
 # 计算每个类别的权重矩阵，度矩阵和拉普拉斯矩阵
 def DLPP_LPP(train_data, method, d, k, t):
-    Data_by_PCA = PCA(train_data, d)
+    Data_by_PCA = PCA(train_data, d+1)
     Weight_matrix = construct_weight_matrix(Data_by_PCA, method, k, t)
     Degree_matrix = np.diag(np.sum(Weight_matrix, axis=1))
     Laplacian_matrix = Degree_matrix - Weight_matrix

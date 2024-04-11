@@ -35,7 +35,7 @@ class Window(QMainWindow):
         for ratio in range(5, 100, 5):
             ratio_decimal = ratio / 100.0
             self.train_test_split_combo.addItem("{:.2f}".format(ratio_decimal))
-        self.train_test_split_combo.setCurrentText("0.20")
+        self.train_test_split_combo.setCurrentText("0.50")
         self.train_test_split_combo.currentIndexChanged.connect(self.recommended_k_parameters)  # 连接方法选择框的信号与槽函数
         self.main_layout.addWidget(self.train_test_split_combo)
 
