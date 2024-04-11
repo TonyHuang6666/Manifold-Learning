@@ -131,6 +131,7 @@ def construct_weight_matrix(Data, method, k,t):
     return Weight_matrix
 
 def LPP(Data, d, method, k, t):
+    Data = Data.T
     Weight_matrix = construct_weight_matrix(Data, method, k, t)
     Degree_matrix = np.diag(np.sum(Weight_matrix, axis=1))
     Laplacian_matrix = Degree_matrix - Weight_matrix
@@ -362,11 +363,11 @@ def read_mnist_dataset(dataset_dir, fraction=0.2):
 
 
 # 测试DLPP, LPP, PCA要查询的图像
-def test_image(i,train_labels, test_labels, query, eigenfaces, weight_matrix):
+def test_image(i, train_labels, test_labels, query, weight_matrix):
     # 计算测试图像的权重向量
-    query_weight = (eigenfaces.T @ query.reshape(-1, 1))
+    query = query.T.reshape(-1, 1)
     # 计算测试图像权重与数据集中每个人脸权重的欧氏距离
-    euclidean_distances = np.linalg.norm(weight_matrix - query_weight, axis=0)
+    euclidean_distances = np.linalg.norm(weight_matrix - query, axis=0)
     # 找到最佳匹配的人脸
     best_match_index = np.argmin(euclidean_distances)
     #判断是否匹配正确

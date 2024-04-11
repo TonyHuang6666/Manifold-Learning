@@ -22,7 +22,7 @@ class Window(QMainWindow):
         # 数据集的选择与划分
         self.dataset_label = QLabel("请选择数据集文件夹:")
         self.main_layout.addWidget(self.dataset_label)
-        self.default_dataset_path = "C:\\Users\Tony\\OneDrive - email.szu.edu.cn\\Manifold Learning\\Discriminant Locality Preserving Projection\\ORL"
+        self.default_dataset_path = "C:\\Users\Tony\\OneDrive - email.szu.edu.cn\\Manifold Learning\\Discriminant Locality Preserving Projection\\mini MNIST"
         self.dataset_path_label = QLabel(f"数据集默认路径: {self.default_dataset_path}")  # 显示默认数据集文件夹的路径
         self.main_layout.addWidget(self.dataset_path_label)
         self.dataset_button = QPushButton("选择其他数据集")
@@ -56,6 +56,12 @@ class Window(QMainWindow):
         for percentage in range(5, 105, 5):
             self.target_size_combo.addItem(f"{percentage}%")
         self.main_layout.addWidget(self.target_size_combo)
+
+        # 输入PCA降维后的维度
+        self.p_label = QLabel("请输入通过PCA降噪后的维度p:")
+        self.main_layout.addWidget(self.p_label)
+        self.p_input = QLineEdit()
+        self.main_layout.addWidget(self.p_input)
 
         # 输入降维后的维度
         self.d_label = QLabel("请输入降维后的维度d:")
@@ -132,7 +138,32 @@ class Window(QMainWindow):
             self.mnist_split_combo.setVisible(False)
             self.target_size_combo.setCurrentText("35%")  # 设置初始值为x%,即长宽均为原来的x%且取整
             self.t_input.setText("100000")  # 默认值为100000
-            self.d_input.setText("70")  # 默认值为70
+            self.p_input.setText("70")  # 默认值为100
+            self.d_input.setText("50")  # 默认值为70
+        elif "MNIST_ORG" in self.default_dataset_path:
+            self.dataset_path = self.default_dataset_path
+            self.recommended_k_parameters()
+            self.train_test_split_label.setVisible(False)
+            self.train_test_split_combo.setVisible(False)
+            self.target_size_label.setVisible(False)
+            self.target_size_combo.setVisible(False)
+            self.mnist_split_label.setVisible(True)
+            self.mnist_split_combo.setVisible(True)
+            self.t_input.setText("1500")
+            self.p_input.setText("70")
+            self.d_input.setText("50")
+        elif "mini" in self.default_dataset_path:
+            self.dataset_path = self.default_dataset_path
+            self.recommended_k_parameters()
+            self.mnist_split_label.setVisible(False)
+            self.mnist_split_combo.setVisible(False)
+            self.target_size_label.setVisible(False)
+            self.target_size_combo.setVisible(False)
+            self.train_test_split_label.setVisible(True)
+            self.train_test_split_combo.setVisible(True)
+            self.t_input.setText("100000")
+            self.p_input.setText("30")
+            self.d_input.setText("20")
 
 
     def center_on_screen(self):
@@ -163,7 +194,8 @@ class Window(QMainWindow):
                 self.mnist_split_combo.setVisible(False)
                 self.target_size_combo.setCurrentText("35%")  # 设置初始值为x%,即长宽均为原来的x%且取整
                 self.t_input.setText("100000")  # 默认值为100000
-                self.d_input.setText("70")  # 默认值为70
+                self.p_input.setText("70")  # 默认值为70
+                self.d_input.setText("50")  # 默认值为50
             elif "MNIST_ORG" in self.dataset_path:
                 self.train_test_split_label.setVisible(False)
                 self.train_test_split_combo.setVisible(False)
@@ -172,7 +204,8 @@ class Window(QMainWindow):
                 self.mnist_split_label.setVisible(True)
                 self.mnist_split_combo.setVisible(True)
                 self.t_input.setText("1500")  # 默认值为1500
-                self.d_input.setText("70")  # 默认值为70
+                self.p_input.setText("70")  # 默认值为70
+                self.d_input.setText("50")  # 默认值为50
             elif "mini" in self.dataset_path:
                 self.train_test_split_label.setVisible(True)
                 self.train_test_split_combo.setVisible(True)
@@ -181,7 +214,8 @@ class Window(QMainWindow):
                 self.mnist_split_label.setVisible(False)
                 self.mnist_split_combo.setVisible(False)
                 self.t_input.setText("100000")  # 默认值为100000
-                self.d_input.setText("20")  # 默认值为70
+                self.p_input.setText("30")  # 默认值为30
+                self.d_input.setText("20")  # 默认值为20
             self.recommended_k_parameters()
         except Exception as e:
             # 弹出错误窗口显示报错原因
@@ -221,6 +255,7 @@ class Window(QMainWindow):
     def execute_algorithm(self):
         try:
             # 获取用户输入的参数值
+            p = int(self.p_input.text())
             d = int(self.d_input.text())
             k = int(self.k_input.text())
             t = int(self.t_input.text())
@@ -276,9 +311,11 @@ class Window(QMainWindow):
                 rate = 0.0  # 初始化识别率
                 if method == "DLPP":
                     # 调用 DLPP 函数并接收返回的中间变量信息
-                    F, L, B, objective_value, eigenfaces = DLPP(train_data, train_labels, d, lpp_method, k, t)
-                    weight_matrix = np.dot(eigenfaces.T, train_data.T)
-
+                    PCA_eigenvectors = PCA(train_data, p)
+                    PCA_weight_matrix = PCA_eigenvectors.T @ train_data.T
+                    F, L, B, objective_value, eigenvectors = DLPP(PCA_eigenvectors, train_labels, d, lpp_method, k, t)
+                    weight_matrix = eigenvectors.T @ PCA_weight_matrix
+                    test_data = test_data @ PCA_eigenvectors @ eigenvectors
                     # 将最后一次运行的信息显示在文本编辑框中
                     if _ == runs - 1:
                         self.info_textedit.clear()
@@ -287,13 +324,13 @@ class Window(QMainWindow):
                         self.show_info("拉普拉斯矩阵形状:", L.shape)
                         self.show_info("类权重矩阵形状:", B.shape)
                         self.show_info("目标函数形状:", objective_value.shape)
-                        self.show_info("特征图像形状:", eigenfaces.shape)
+                        self.show_info("特征图像形状:", eigenvectors.shape)
                         self.show_info("权重矩阵形状:", weight_matrix.shape)
                     # 识别率统计
                     wrong_times = 0
                     right_times = 0
                     for i in range(test_data.shape[0]):
-                        flag = test_image(i, train_labels, test_labels, test_data[i], eigenfaces, weight_matrix)
+                        flag = test_image(i, train_labels, test_labels, test_data[i], weight_matrix)
                         if flag:
                             right_times += 1
                         else:
@@ -302,21 +339,23 @@ class Window(QMainWindow):
 
                 elif method == "LPP":
                     # 调用 LPP 函数并接收返回的中间变量信息
-                    train_data = train_data.T
-                    eigenfaces = LPP(train_data, d, lpp_method, k, t)
-                    weight_matrix = eigenfaces.T @ train_data
+                    PCA_eigenvectors = PCA(train_data, p)
+                    PCA_weight_matrix = PCA_eigenvectors.T @ train_data.T
+                    eigenvectors = LPP(PCA_eigenvectors, d, lpp_method, k, t)
+                    weight_matrix = eigenvectors.T @ PCA_weight_matrix
+                    test_data = test_data @ PCA_eigenvectors @ eigenvectors
                     # 将最后一次运行的信息显示在文本编辑框中
                     if _ == runs - 1:
                         # 将信息显示在文本编辑框中
                         self.info_textedit.clear()
                         self.show_info("训练数据集形状:", train_data.shape)
-                        self.show_info("特征图像形状:", eigenfaces.shape)
+                        self.show_info("特征图像形状:", eigenvectors.shape)
                         self.show_info("权重矩阵形状:", weight_matrix.shape)
                     # 识别率统计
                     wrong_times = 0
                     right_times = 0
                     for i in range(test_data.shape[0]):
-                        flag = test_image(i, train_labels, test_labels, test_data[i], eigenfaces, weight_matrix)
+                        flag = test_image(i, train_labels, test_labels, test_data[i], weight_matrix)
                         if flag:
                             right_times += 1
                         else:
@@ -351,20 +390,21 @@ class Window(QMainWindow):
 
                 elif method == "PCA":
                     # 调用 PCA 函数并接收返回的中间变量信息
-                    eigenfaces = PCA(train_data, d)
-                    weight_matrix = eigenfaces.T @ train_data.T
+                    eigenvectors = PCA(train_data, d)
+                    weight_matrix = eigenvectors.T @ train_data.T
+                    test_data = test_data @ eigenvectors
                     # 将最后一次运行的信息显示在文本编辑框中
                     if _ == runs - 1:
                         # 将信息显示在文本编辑框中
                         self.info_textedit.clear()
                         self.show_info("训练数据集形状:", train_data.T.shape)
-                        self.show_info("特征脸形状:", eigenfaces.shape)
+                        self.show_info("特征脸形状:", eigenvectors.shape)
                         self.show_info("权重矩阵形状:", weight_matrix.shape)
                     # 识别率统计
                     wrong_times = 0
                     right_times = 0
                     for i in range(test_data.shape[0]):
-                        flag = test_image(i, train_labels, test_labels, test_data[i], eigenfaces, weight_matrix)
+                        flag = test_image(i, train_labels, test_labels, test_data[i], weight_matrix)
                         if flag:
                             right_times += 1
                         else:
@@ -382,7 +422,7 @@ class Window(QMainWindow):
             self.info_label.setText(f"平均图像识别正确率: {average_accuracy}\n程序运行时间: {execution_time:.2f} 秒")
 
             # 显示特征脸图像
-            self.show_eigenfaces(eigenfaces, faceshape)
+            #self.show_eigenfaces(eigenfaces, faceshape)
 
         except Exception as e:
             # 弹出错误窗口显示报错原因
@@ -426,6 +466,8 @@ class Window(QMainWindow):
             self.k_input.setVisible(False)
             self.t_label.setVisible(False)
             self.t_input.setVisible(False)
+            self.p_label.setVisible(False)
+            self.p_input.setVisible(False)
             self.d_label.setVisible(True)
             self.d_input.setVisible(True)
             self.lpp_method_label.setVisible(False)
@@ -439,6 +481,8 @@ class Window(QMainWindow):
                 self.k_input.setVisible(True)
             self.t_label.setVisible(True)
             self.t_input.setVisible(True)
+            self.p_label.setVisible(True)
+            self.p_input.setVisible(True)
             self.d_label.setVisible(True)
             self.d_input.setVisible(True)
             self.lpp_method_label.setVisible(True)
@@ -452,6 +496,8 @@ class Window(QMainWindow):
                 self.k_input.setVisible(True)
             self.t_label.setVisible(True)
             self.t_input.setVisible(True)
+            self.p_label.setVisible(True)
+            self.p_input.setVisible(True)
             self.d_label.setVisible(True)
             self.d_input.setVisible(True)
             self.lpp_method_label.setVisible(True)
@@ -461,6 +507,8 @@ class Window(QMainWindow):
             self.k_input.setVisible(False)
             self.t_label.setVisible(False)
             self.t_input.setVisible(False)
+            self.p_label.setVisible(False)
+            self.p_input.setVisible(False)
             self.d_label.setVisible(True)
             self.d_input.setVisible(True)
             self.lpp_method_label.setVisible(False)
