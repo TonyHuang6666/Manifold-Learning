@@ -131,11 +131,10 @@ def construct_weight_matrix(Data, method, k,t):
     return Weight_matrix
 
 def LPP(Data, d, method, k, t):
-    Data_by_PCA = PCA(Data.T, d+1)
-    Weight_matrix = construct_weight_matrix(Data_by_PCA, method, k, t)
+    Weight_matrix = construct_weight_matrix(Data, method, k, t)
     Degree_matrix = np.diag(np.sum(Weight_matrix, axis=1))
     Laplacian_matrix = Degree_matrix - Weight_matrix
-    objective_value = np.dot(np.dot(Data_by_PCA, Laplacian_matrix), Data_by_PCA.T)  # 计算目标函数
+    objective_value = np.dot(np.dot(Data, Laplacian_matrix), Data.T)  # 计算目标函数
     # eigs用于稀疏矩阵，eigh用于稠密矩阵
     eigenvalues, eigenvectors = eigs(objective_value, k=d+1)
     sorted_indices = np.argsort(eigenvalues.real)
@@ -214,11 +213,11 @@ def MLDA(train_data, train_labels, faceshape, d):
 
 # 计算每个类别的权重矩阵，度矩阵和拉普拉斯矩阵
 def DLPP_LPP(train_data, method, d, k, t):
-    Data_by_PCA = PCA(train_data, d+1)
-    Weight_matrix = construct_weight_matrix(Data_by_PCA, method, k, t)
+    train_data = train_data.T
+    Weight_matrix = construct_weight_matrix(train_data, method, k, t)
     Degree_matrix = np.diag(np.sum(Weight_matrix, axis=1))
     Laplacian_matrix = Degree_matrix - Weight_matrix
-    return Laplacian_matrix, Data_by_PCA
+    return Laplacian_matrix, train_data
 
 # 计算每个类别的均值矩阵
 def DLPP_MLDA(train_data, train_labels, d):
