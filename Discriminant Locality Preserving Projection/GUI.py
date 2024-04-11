@@ -11,7 +11,7 @@ class Window(QMainWindow):
     def __init__(self):
         super().__init__()
 
-        self.setWindowTitle("DLPP LPP LDA PCA 图像特征提取与识别程序")
+        self.setWindowTitle("DLPP LPP MLDA PCA 图像特征提取与识别程序")
         self.setGeometry(0, 0, 1200, 1300)
         self.center_on_screen()
         self.central_widget = QWidget()
@@ -35,7 +35,7 @@ class Window(QMainWindow):
         for ratio in range(5, 100, 5):
             ratio_decimal = ratio / 100.0
             self.train_test_split_combo.addItem("{:.2f}".format(ratio_decimal))
-        self.train_test_split_combo.setCurrentText("0.70")
+        self.train_test_split_combo.setCurrentText("0.20")
         self.train_test_split_combo.currentIndexChanged.connect(self.recommended_k_parameters)  # 连接方法选择框的信号与槽函数
         self.main_layout.addWidget(self.train_test_split_combo)
 
