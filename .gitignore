@@ -3,6 +3,7 @@ images/
 *.css
 *.csv
 *.npy
+*.pyc
 
 # Jupyter Notebook output
 *.ipynb_checkpoints/
