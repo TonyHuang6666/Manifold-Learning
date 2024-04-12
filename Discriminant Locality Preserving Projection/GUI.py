@@ -297,7 +297,11 @@ class Window(QMainWindow):
             for _ in range(runs):
                 if "ORL" in self.dataset_path:
                     data, labels, faceshape = read_images(self.dataset_path, target_size=target_size)
-                    train_data, train_labels, test_data, test_labels = train_test_split(data, labels, train_test_split_ratio=train_test_split_ratio)
+                    if method == "PCA":
+                        data_by_pca = PCA(data.T, d)
+                    else:
+                        data_by_pca = PCA(data.T, p)
+                    train_data, train_labels, test_data, test_labels = train_test_split(data_by_pca, labels, train_test_split_ratio=train_test_split_ratio)
                 if "MNIST_ORG" in self.dataset_path:
                     fraction = float(self.mnist_split_combo.currentText())
                     train_data, train_labels, test_data, test_labels, faceshape = read_mnist_dataset(self.dataset_path, fraction=fraction)
@@ -307,21 +311,21 @@ class Window(QMainWindow):
                     data = digits.data
                     target = digits.target
                     faceshape = (8, 8)
-                    train_data, train_labels, test_data, test_labels = train_test_split(data, target, train_test_split_ratio=train_test_split_ratio)
+                    if method == "PCA":
+                        data_by_pca = PCA(data.T, d)
+                    else:
+                        data_by_pca = PCA(data.T, p)
+                    train_data, train_labels, test_data, test_labels = train_test_split(data_by_pca, target, train_test_split_ratio=train_test_split_ratio)
                 rate = 0.0  # 初始化识别率
                 if method == "DLPP":
                     # 调用 DLPP 函数并接收返回的中间变量信息
-                    PCA_eigenvectors = PCA(train_data, p)
-                    PCA_weight_matrix = PCA_eigenvectors.T @ train_data.T
-                    train_data_by_pca = PCA(train_data.T, p)
-                    F, L, B, objective_value, eigenvectors = DLPP(train_data_by_pca, train_labels, p, d, lpp_method, k, t)
-                    weight_matrix = eigenvectors.T @ PCA_weight_matrix
-                    test_data = test_data @ PCA_eigenvectors @ eigenvectors
+                    F, L, B, objective_value, eigenvectors = DLPP(train_data, train_labels, d, lpp_method, k, t)
+                    weight_matrix = eigenvectors.T @ train_data.T
+                    test_data = eigenvectors.T @ test_data.T
                     # 将最后一次运行的信息显示在文本编辑框中
                     if _ == runs - 1:
                         self.info_textedit.clear()
                         self.show_info("初始训练数据集形状:", train_data.shape)
-                        self.show_info("PCA提取的主成分形状/训练数据集形状:", PCA_eigenvectors.T.shape)
                         self.show_info("类平均图像形状:", F.shape)
                         self.show_info("拉普拉斯矩阵形状:", L.shape)
                         self.show_info("类权重矩阵形状:", B.shape)
@@ -332,7 +336,7 @@ class Window(QMainWindow):
                     wrong_times = 0
                     right_times = 0
                     for i in range(test_data.shape[0]):
-                        flag = test_image(i, train_labels, test_labels, test_data[i], weight_matrix)
+                        flag = test_image(i, train_labels, test_labels, test_data[:,i], weight_matrix)
                         if flag:
                             right_times += 1
                         else:
@@ -341,12 +345,9 @@ class Window(QMainWindow):
 
                 elif method == "LPP":
                     # 调用 LPP 函数并接收返回的中间变量信息
-                    PCA_eigenvectors = PCA(train_data, p)
-                    train_data_by_pca = PCA(train_data.T, p)
-                    PCA_weight_matrix = PCA_eigenvectors.T @ train_data.T
-                    eigenvectors = LPP(train_data_by_pca, d, lpp_method, k, t)
-                    weight_matrix = eigenvectors.T @ PCA_weight_matrix
-                    test_data = test_data @ PCA_eigenvectors @ eigenvectors
+                    eigenvectors = LPP(train_data, d, lpp_method, k, t)
+                    weight_matrix = eigenvectors.T @ train_data.T
+                    test_data = eigenvectors.T @ test_data.T
                     # 将最后一次运行的信息显示在文本编辑框中
                     if _ == runs - 1:
                         # 将信息显示在文本编辑框中
@@ -358,7 +359,7 @@ class Window(QMainWindow):
                     wrong_times = 0
                     right_times = 0
                     for i in range(test_data.shape[0]):
-                        flag = test_image(i, train_labels, test_labels, test_data[i], weight_matrix)
+                        flag = test_image(i, train_labels, test_labels, test_data[:,i], weight_matrix)
                         if flag:
                             right_times += 1
                         else:
@@ -392,22 +393,17 @@ class Window(QMainWindow):
                     rate = right_times / test_data.shape[0]
 
                 elif method == "PCA":
-                    # 调用 PCA 函数并接收返回的中间变量信息
-                    eigenvectors = PCA(train_data, d)
-                    weight_matrix = eigenvectors.T @ train_data.T
-                    test_data = test_data @ eigenvectors
+
                     # 将最后一次运行的信息显示在文本编辑框中
                     if _ == runs - 1:
                         # 将信息显示在文本编辑框中
                         self.info_textedit.clear()
                         self.show_info("训练数据集形状:", train_data.T.shape)
-                        self.show_info("特征脸形状:", eigenvectors.shape)
-                        self.show_info("权重矩阵形状:", weight_matrix.shape)
                     # 识别率统计
                     wrong_times = 0
                     right_times = 0
                     for i in range(test_data.shape[0]):
-                        flag = test_image(i, train_labels, test_labels, test_data[i], weight_matrix)
+                        flag = test_image(i, train_labels, test_labels, test_data[i], train_data.T)
                         if flag:
                             right_times += 1
                         else:

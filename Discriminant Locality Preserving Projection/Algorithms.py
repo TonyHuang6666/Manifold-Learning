@@ -225,7 +225,7 @@ def DLPP_MLDA(train_data, train_labels):
     classes_means = compute_classes_mean_matrix(train_data, train_labels)
     return classes_means.T
 
-def DLPP(train_data, train_labels, p, d, lpp_method, k, t):
+def DLPP(train_data, train_labels, d, lpp_method, k, t):
     # Step 1: 使用MLDA进行特征提取
     F = DLPP_MLDA(train_data, train_labels)
     # Step 2: 使用LPP进行特征提取
@@ -365,7 +365,7 @@ def read_mnist_dataset(dataset_dir, fraction=0.2):
 # 测试DLPP, LPP, PCA要查询的图像
 def test_image(i, train_labels, test_labels, query, weight_matrix):
     # 计算测试图像的权重向量
-    query = query.T.reshape(-1, 1)
+    query = query.reshape(-1, 1)
     # 计算测试图像权重与数据集中每个人脸权重的欧氏距离
     euclidean_distances = np.linalg.norm(weight_matrix - query, axis=0)
     # 找到最佳匹配的人脸
