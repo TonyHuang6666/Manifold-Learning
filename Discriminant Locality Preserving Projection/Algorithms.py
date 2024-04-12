@@ -4,7 +4,6 @@ from os import listdir, path
 from cv2 import imread, resize, INTER_AREA, IMREAD_GRAYSCALE
 from scipy.linalg import eigh
 from scipy.sparse.linalg import eigs
-from scipy.linalg import eig
 from scipy.interpolate import interp1d
 from struct import unpack
 
@@ -213,7 +212,7 @@ def MLDA(train_data, train_labels, faceshape, d):
 ###############################DLPP算法函数######################################
 
 # 计算每个类别的权重矩阵，度矩阵和拉普拉斯矩阵
-def DLPP_LPP(train_data, method, d, k, t):
+def DLPP_LPP(train_data, method, k, t):
     train_data = train_data.T
     Weight_matrix = construct_weight_matrix(train_data, method, k, t)
     Degree_matrix = np.diag(np.sum(Weight_matrix, axis=1))
@@ -229,7 +228,7 @@ def DLPP(train_data, train_labels, d, lpp_method, k, t):
     # Step 1: 使用MLDA进行特征提取
     F = DLPP_MLDA(train_data, train_labels)
     # Step 2: 使用LPP进行特征提取
-    L, X = DLPP_LPP(train_data, lpp_method, d, k, t)
+    L, X = DLPP_LPP(train_data, lpp_method, k, t)
     # Step 3: 计算权重矩阵B
     num_classes = len(np.unique(train_labels))  # 计算训练集中的类别数
     B = np.zeros((num_classes, num_classes))  # 初始化权重矩阵B

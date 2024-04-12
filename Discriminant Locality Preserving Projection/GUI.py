@@ -22,7 +22,7 @@ class Window(QMainWindow):
         # 数据集的选择与划分
         self.dataset_label = QLabel("请选择数据集文件夹:")
         self.main_layout.addWidget(self.dataset_label)
-        self.default_dataset_path = "C:\\Users\Tony\\OneDrive - email.szu.edu.cn\\Manifold Learning\\Discriminant Locality Preserving Projection\\ORL"
+        self.default_dataset_path = "D:\\OneDrive - email.szu.edu.cn\\Manifold Learning\\Discriminant Locality Preserving Projection\\ORL"
         self.dataset_path_label = QLabel(f"数据集默认路径: {self.default_dataset_path}")  # 显示默认数据集文件夹的路径
         self.main_layout.addWidget(self.dataset_path_label)
         self.dataset_button = QPushButton("选择其他数据集")
@@ -225,7 +225,7 @@ class Window(QMainWindow):
     def recommended_k_parameters(self):
         # 获取当前选择的数据集
         selected_dataset = self.dataset_path
-        # 根据数据集推荐 k 的值
+
         #如果读取的是ORL数据集，即self.dataset_path中含有"ORL"字符串
         if "ORL" in self.dataset_path:
             data, labels, faceshape = read_images(self.dataset_path, target_size=None)
