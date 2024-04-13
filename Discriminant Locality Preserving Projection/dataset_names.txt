@@ -1,0 +1,45 @@
+clear_data_home: 清除默认数据集存储位置中的缓存数据。
+dump_svmlight_file: 将数据集保存为SVM Light文件格式。
+fetch_20newsgroups: 从20个新闻组数据集中获取文本数据。
+fetch_20newsgroups_vectorized: 从20个新闻组数据集中获取文本数据，并进行向量化处理。
+fetch_lfw_pairs: 从Labeled Faces in the Wild (LFW)数据集中获取成对的人脸图像数据。
+fetch_lfw_people: 从Labeled Faces in the Wild (LFW)数据集中获取人脸图像数据。
+fetch_olivetti_faces: 获取Olivetti人脸图像数据集。
+fetch_species_distributions: 获取物种分布数据集。
+fetch_california_housing: 获取加利福尼亚州住房数据集。
+fetch_covtype: 获取覆盖类型数据集。
+fetch_rcv1: 获取RCV1文本分类数据集。
+fetch_kddcup99: 获取KDD Cup 1999数据集。
+fetch_openml: 从OpenML获取数据集。
+get_data_home: 返回scikit-learn数据集的默认存储路径。
+load_diabetes: 加载糖尿病数据集。
+load_digits: 加载手写数字数据集。
+load_files: 加载具有类别文件夹的文本文件集。
+load_iris: 加载鸢尾花数据集。
+load_breast_cancer: 加载乳腺癌数据集。
+load_linnerud: 加载Linnerud数据集。
+load_sample_image: 加载示例图像。
+load_sample_images: 加载示例图像集。
+load_svmlight_file: 加载SVM Light文件格式的数据集。
+load_svmlight_files: 加载多个SVM Light文件格式的数据集。
+load_wine: 加载葡萄酒数据集。
+make_biclusters: 创建双向聚类数据集。
+make_blobs: 创建高斯混合数据集。
+make_circles: 创建环形数据集。
+make_classification: 创建分类数据集。
+make_checkerboard: 创建棋盘数据集。
+make_friedman1: 创建Friedman1回归数据集。
+make_friedman2: 创建Friedman2回归数据集。
+make_friedman3: 创建Friedman3回归数据集。
+make_gaussian_quantiles: 创建高斯分布数据集。
+make_hastie_10_2: 创建Hastie10.2分类数据集。
+make_low_rank_matrix: 创建低秩矩阵数据集。
+make_moons: 创建月亮形状数据集。
+make_multilabel_classification: 创建多标签分类数据集。
+make_regression: 创建回归数据集。
+make_s_curve: 创建S形曲线数据集。
+make_sparse_coded_signal: 创建稀疏编码信号数据集。
+make_sparse_spd_matrix: 创建稀疏对称正定矩阵数据集。
+make_sparse_uncorrelated: 创建稀疏且不相关的数据集。
+make_spd_matrix: 创建对称正定矩阵数据集。
+make_swiss_roll: 创建瑞士卷数据集。
