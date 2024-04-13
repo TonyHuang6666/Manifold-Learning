@@ -126,7 +126,7 @@ def construct_weight_matrix(Data, method, k,t):
     i_indices, j_indices = np.where(adjacency_matrix == 1)
     Weight_matrix[i_indices, j_indices] = similarity_matrix[i_indices, j_indices]
     Weight_matrix[j_indices, i_indices] = similarity_matrix[i_indices, j_indices]
-    Weight_matrix += np.exp(-distances ** 2 / t)
+    #Weight_matrix += np.exp(-distances ** 2 / t) 如果修正那么有用那对邻域的改进还有什么意义？？
     return Weight_matrix
 
 def LPP(Data, d, method, k, t):
