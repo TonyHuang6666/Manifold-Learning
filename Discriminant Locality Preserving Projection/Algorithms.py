@@ -263,7 +263,7 @@ def DLPP(train_data, train_labels, d, lpp_method, k, t):
 
 
 # 读取数据集
-def read_images(dataset_dir, target_size=None):
+def read_ORL_images(dataset_dir, target_size=None):
     data = []  # 存储图像数据的列表
     labels = []  # 存储标签的列表
     faceshape = [] # 存储图像形状
@@ -323,6 +323,52 @@ def train_test_split(data, labels, train_test_split_ratio):
     
     return train_data, train_labels, test_data, test_labels
 
+"""
+# 读取MNIST数据集
+def read_mnist_dataset(dataset_dir, fraction=0.2, target_size=None):
+    def read_images(images_file, num_images, rows, cols):
+        with open(images_file, 'rb') as f:
+            magic, total_images = unpack('>II', f.read(8))
+            images = np.fromfile(f, dtype=np.uint8, count=num_images * rows * cols)
+            images = images.reshape(num_images, rows, cols)
+            if target_size is not None:
+                resized_images = []
+                for img in images:
+                    resized_img = resize(img, target_size, interpolation=INTER_AREA)
+                    resized_images.append(resized_img)
+                images = np.array(resized_images)
+        return images
+
+    def read_labels(labels_file, num_labels):
+        with open(labels_file, 'rb') as f:
+            magic, total_labels = unpack('>II', f.read(8))
+            labels = np.fromfile(f, dtype=np.uint8, count=num_labels)
+        return labels
+
+    train_images_file = path.join(dataset_dir, 'train-images.idx3-ubyte')
+    train_labels_file = path.join(dataset_dir, 'train-labels.idx1-ubyte')
+    test_images_file = path.join(dataset_dir, 't10k-images.idx3-ubyte')
+    test_labels_file = path.join(dataset_dir, 't10k-labels.idx1-ubyte')
+
+    # 获取数据集的原始数量和图像大小
+    with open(train_images_file, 'rb') as f:
+        magic, total_train_images, rows, cols = unpack('>IIII', f.read(16))
+    with open(test_images_file, 'rb') as f:
+        magic, total_test_images, rows, cols = unpack('>IIII', f.read(16))
+
+    # 计算要读取的数量
+    num_train_images = int(total_train_images * fraction)
+    num_test_images = int(total_test_images * fraction)
+
+    # 读取数据集
+    train_images = read_images(train_images_file, num_train_images, rows, cols)
+    train_labels = read_labels(train_labels_file, num_train_images).reshape(-1, 1)
+    test_images = read_images(test_images_file, num_test_images, rows, cols)
+    test_labels = read_labels(test_labels_file, num_test_images).reshape(-1, 1)
+
+    return train_images, train_labels, test_images, test_labels, (rows, cols)
+
+"""
 # 读取MNIST数据集
 def read_mnist_dataset(dataset_dir, fraction=0.2):
     def read_images(images_file, num_images, rows, cols):

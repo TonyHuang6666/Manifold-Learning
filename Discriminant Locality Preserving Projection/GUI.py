@@ -22,7 +22,7 @@ class Window(QMainWindow):
         # 数据集的选择与划分
         self.dataset_label = QLabel("请选择数据集文件夹:")
         self.main_layout.addWidget(self.dataset_label)
-        self.default_dataset_path = "D:\\OneDrive - email.szu.edu.cn\\Manifold Learning\\Discriminant Locality Preserving Projection\\ORL"
+        self.default_dataset_path = "C:\\Users\\Tony\\OneDrive - email.szu.edu.cn\\Manifold Learning\\Discriminant Locality Preserving Projection\\ORL"
         self.dataset_path_label = QLabel(f"数据集默认路径: {self.default_dataset_path}")  # 显示默认数据集文件夹的路径
         self.main_layout.addWidget(self.dataset_path_label)
         self.dataset_button = QPushButton("选择其他数据集")
@@ -93,7 +93,7 @@ class Window(QMainWindow):
         self.lpp_method_combo.currentIndexChanged.connect(self.toggle_parameters_visibility)  # 连接方法选择框的信号与槽函数
         self.main_layout.addWidget(self.lpp_method_combo)
 
-        self.k_label = QLabel("请输入数据点最近邻数量k(默认值为单类别样本数的一半):") 
+        self.k_label = QLabel("请输入数据点最近邻数量k(默认值为每个类别的样本数减1):") 
         self.main_layout.addWidget(self.k_label)
         self.k_input = QLineEdit()
         self.main_layout.addWidget(self.k_input)
@@ -228,13 +228,13 @@ class Window(QMainWindow):
 
         #如果读取的是ORL数据集，即self.dataset_path中含有"ORL"字符串
         if "ORL" in self.dataset_path:
-            data, labels, faceshape = read_images(self.dataset_path, target_size=None)
+            data, labels, image_shape = read_ORL_images(self.dataset_path, target_size=None)
             train_test_split_ratio = float(self.train_test_split_combo.currentText())
             train_data, train_labels, test_data, test_labels = train_test_split(data, labels, train_test_split_ratio=train_test_split_ratio)
         #如果读取的是MNIST数据集，即self.dataset_path中含有"MNIST"字符串
         elif "MNIST_ORG" in self.dataset_path:
             fraction = float(self.mnist_split_combo.currentText())
-            train_data, train_labels, test_data, test_labels, faceshape = read_mnist_dataset(self.dataset_path, fraction=fraction)
+            train_data, train_labels, test_data, test_labels, image_shape = read_mnist_dataset(self.dataset_path, fraction=fraction)
         #如果读取的是mini_mnist数据集，即self.dataset_path中含有"Reduced"字符串
         elif "mini" in self.dataset_path:
             from sklearn.datasets import load_digits
@@ -247,7 +247,7 @@ class Window(QMainWindow):
             raise ValueError(f"未知数据集: {selected_dataset}")
         num_classes = len(np.unique(train_labels))  # 类别数量
         num_samples_per_class = train_data.shape[0] // num_classes  # 每个类别的样本数
-        k = int(num_samples_per_class/2)  # 推荐的 k 值为每个类别的样本数的一半且为整型数字
+        k = int(num_samples_per_class - 1)  # 推荐的 k 值为每个类别的样本数减一
         self.k_input.setText(str(k))  # 推荐的 k 值
         return 0
         
@@ -261,32 +261,54 @@ class Window(QMainWindow):
             t = int(self.t_input.text())
             method = self.method_combo.currentText()
             lpp_method = self.lpp_method_combo.currentText()
-            faceshape_temp = None
-            train_test_split_ratio = None
+            train_test_split_ratio = float(self.train_test_split_combo.currentText())
+            target_size_str = self.target_size_combo.currentText()
 
             #如果读取的是ORL数据集，即self.dataset_path中含有"ORL"字符串
             if "ORL" in self.dataset_path:
-                data_temp, labels_temp, faceshape_temp = read_images(self.dataset_path, target_size=None)
-                train_test_split_ratio = float(self.train_test_split_combo.currentText())
+                data, labels, image_shape_temp = read_ORL_images(self.dataset_path, target_size=None)
+
             #如果读取的是MNIST数据集，即self.dataset_path中含有"MNIST"字符串
             elif "MNIST_ORG" in self.dataset_path:
                 fraction = float(self.mnist_split_combo.currentText())
-                train_data, train_labels, test_data, test_labels, faceshape = read_mnist_dataset(self.dataset_path, fraction=fraction)
-                faceshape_temp = faceshape
+                train_data, train_labels, test_data, test_labels, image_shape_temp = read_mnist_dataset(self.dataset_path, fraction=fraction)
+            
             #如果读取的是mini_mnist数据集，即self.dataset_path中含有"Reduced"字符串
             elif "mini" in self.dataset_path:
-                faceshape_temp = (8, 8)
-                train_test_split_ratio = float(self.train_test_split_combo.currentText())
-                # 8*8尺寸已经足够小，不需要缩放
+                from sklearn.datasets import load_digits
+                digits = load_digits()
+                data = digits.data
+                labels = digits.target
+                image_shape_temp = None
+                image_shape = (8, 8)# 8*8尺寸已经足够小，不需要缩放
+                
 
-            # 获取目标尺寸并按选择缩放
-            target_size_str = self.target_size_combo.currentText()
+            # 按选择缩放图像
             if target_size_str == "100%":
                 target_size = None
             else:
                 percentage = int(target_size_str[:-1]) / 100.0
-                target_size = (int(faceshape_temp[0] * percentage), int(faceshape_temp[1] * percentage))  # 使用 faceshape 确定原始尺寸
-        
+                target_size = (int(image_shape_temp[0] * percentage), int(image_shape_temp[1] * percentage))  # 使用 image_shape 确定原始尺寸
+
+
+            if "ORL" in self.dataset_path:
+                data, labels, image_shape = read_ORL_images(self.dataset_path, target_size=target_size)
+                if method == "PCA":
+                    data_by_pca = PCA(data.T, d)
+                else:
+                    data_by_pca = PCA(data.T, p)
+                train_data, train_labels, test_data, test_labels = train_test_split(data_by_pca, labels, train_test_split_ratio=train_test_split_ratio)
+            
+            elif "MNIST_ORG" in self.dataset_path:
+                train_data, train_labels, test_data, test_labels, image_shape = read_mnist_dataset(self.dataset_path, fraction=fraction)
+
+            elif "mini" in self.dataset_path:
+                if method == "PCA":
+                    data_by_pca = PCA(data.T, d)
+                else:
+                    data_by_pca = PCA(data.T, p)
+                train_data, train_labels, test_data, test_labels = train_test_split(data_by_pca, labels, train_test_split_ratio=train_test_split_ratio)
+
             runs = int(self.runs_input.text())  # 获取运行次数
             accuracies = []  # 用于存储每次运行的准确率
             start_time = time.time()  # 记录开始时间
@@ -295,27 +317,6 @@ class Window(QMainWindow):
             QApplication.processEvents()  # 强制刷新界面，立即显示按钮文本变更
 
             for _ in range(runs):
-                if "ORL" in self.dataset_path:
-                    data, labels, faceshape = read_images(self.dataset_path, target_size=target_size)
-                    if method == "PCA":
-                        data_by_pca = PCA(data.T, d)
-                    else:
-                        data_by_pca = PCA(data.T, p)
-                    train_data, train_labels, test_data, test_labels = train_test_split(data_by_pca, labels, train_test_split_ratio=train_test_split_ratio)
-                if "MNIST_ORG" in self.dataset_path:
-                    fraction = float(self.mnist_split_combo.currentText())
-                    train_data, train_labels, test_data, test_labels, faceshape = read_mnist_dataset(self.dataset_path, fraction=fraction)
-                if "mini" in self.dataset_path:
-                    from sklearn.datasets import load_digits
-                    digits = load_digits()
-                    data = digits.data
-                    target = digits.target
-                    faceshape = (8, 8)
-                    if method == "PCA":
-                        data_by_pca = PCA(data.T, d)
-                    else:
-                        data_by_pca = PCA(data.T, p)
-                    train_data, train_labels, test_data, test_labels = train_test_split(data_by_pca, target, train_test_split_ratio=train_test_split_ratio)
                 rate = 0.0  # 初始化识别率
                 if method == "DLPP":
                     # 调用 DLPP 函数并接收返回的中间变量信息
@@ -325,7 +326,8 @@ class Window(QMainWindow):
                     # 将最后一次运行的信息显示在文本编辑框中
                     if _ == runs - 1:
                         self.info_textedit.clear()
-                        self.show_info("初始训练数据集形状:", train_data.shape)
+                        self.show_info("读取的图像形状:", image_shape)
+                        self.show_info("训练数据集形状:", train_data.shape)
                         self.show_info("类平均图像形状:", F.shape)
                         self.show_info("拉普拉斯矩阵形状:", L.shape)
                         self.show_info("类权重矩阵形状:", B.shape)
@@ -352,6 +354,7 @@ class Window(QMainWindow):
                     if _ == runs - 1:
                         # 将信息显示在文本编辑框中
                         self.info_textedit.clear()
+                        self.show_info("读取的图像形状:", image_shape)
                         self.show_info("训练数据集形状:", train_data.shape)
                         self.show_info("特征图像形状:", eigenvectors.shape)
                         self.show_info("权重矩阵形状:", weight_matrix.shape)
@@ -368,11 +371,12 @@ class Window(QMainWindow):
 
                 elif method == "MLDA":
                     # 调用 MLDA 函数并接收返回的中间变量信息
-                    eigenfaces, overall_mean, classes_means, Z, Sb, Sw, W_value = MLDA(train_data, train_labels, faceshape, d)
+                    eigenfaces, overall_mean, classes_means, Z, Sb, Sw, W_value = MLDA(train_data, train_labels, image_shape, d)
                     # 将最后一次运行的信息显示在文本编辑框中
                     if _ == runs - 1:
                         # 将信息显示在文本编辑框中
                         self.info_textedit.clear()
+                        self.show_info("读取的图像形状:", image_shape)
                         self.show_info("训练数据集形状:", train_data.T.shape)
                         self.show_info("平均图像形状:", overall_mean.shape)
                         self.show_info("类均值形状:", classes_means.shape)
@@ -393,11 +397,11 @@ class Window(QMainWindow):
                     rate = right_times / test_data.shape[0]
 
                 elif method == "PCA":
-
                     # 将最后一次运行的信息显示在文本编辑框中
                     if _ == runs - 1:
                         # 将信息显示在文本编辑框中
                         self.info_textedit.clear()
+                        self.show_info("读取的图像形状:", image_shape)
                         self.show_info("训练数据集形状:", train_data.T.shape)
                     # 识别率统计
                     wrong_times = 0
@@ -422,13 +426,12 @@ class Window(QMainWindow):
             self.info_label.setText(f"平均图像识别正确率: {average_accuracy}\n程序运行时间: {execution_time:.2f} 秒")
 
             # 显示特征脸图像
-            #self.show_eigenfaces(eigenfaces, faceshape)
+            #self.show_eigenfaces(eigenfaces, image_shape)
 
         except Exception as e:
             # 弹出错误窗口显示报错原因
             error_message = f"错误类型: {type(e).__name__}\n错误信息: {str(e)}"
             QMessageBox.critical(self, "错误", error_message)
-
         finally:
             # 执行完毕后还原按钮文本为“执行程序”
             self.execute_button.setText("执行程序")
@@ -438,7 +441,7 @@ class Window(QMainWindow):
         # 将信息追加显示在文本编辑框中
         self.info_textedit.append(f"{title}: {info}")
 
-    def show_eigenfaces(self, eigenfaces, faceshape):
+    def show_eigenfaces(self, eigenfaces, image_shape):
         # 清空之前的图像
         self.canvas.figure.clear()
 
@@ -450,7 +453,7 @@ class Window(QMainWindow):
         # 显示特征脸并取消坐标轴
         for i in range(num_faces):
             ax = self.canvas.figure.add_subplot(num_rows, num_cols, i + 1)
-            ax.imshow(eigenfaces[:, i].reshape(faceshape), cmap="gray")
+            ax.imshow(eigenfaces[:, i].reshape(image_shape), cmap="gray")
             ax.axis('off')
 
         # 刷新画布
