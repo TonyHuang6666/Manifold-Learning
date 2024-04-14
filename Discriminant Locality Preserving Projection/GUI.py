@@ -411,6 +411,7 @@ class Window(QMainWindow):
                     rate = right_times / test_data.shape[0]
 
                 accuracies.append(rate)  # 记录准确率
+            print(accuracies)
 
             average_accuracy = np.mean(accuracies)  # 计算平均准确率
 
