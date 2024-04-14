@@ -6,6 +6,7 @@ from scipy.linalg import eigh
 from scipy.sparse.linalg import eigs
 from scipy.interpolate import interp1d
 from struct import unpack
+from sklearn.model_selection import train_test_split
 
 ###############################PCA算法函数######################################
 # PCA实现函数
@@ -236,8 +237,8 @@ def DLPP(train_data, train_labels, d, lpp_method, k, t):
     for i in range(num_classes):  # 遍历每个类别
         for j in range(num_classes):  # 再次遍历每个类别
             if i != j:  # 如果类别不相同
-                fi = F[i]  # 获取第i个类别的平均脸
-                fj = F[j]  # 获取第j个类别的平均脸
+                fi = F[:,i]  # 获取第i个类别的平均脸
+                fj = F[:,j]  # 获取第j个类别的平均脸
                 # 计算第i类别和第j类别平均脸之间的欧氏距离，并将其应用于高斯核函数，计算权重
                 B[i, j] = np.exp(-np.linalg.norm(fi - fj) ** 2 / t)
     # Step 4: 计算E和H矩阵
