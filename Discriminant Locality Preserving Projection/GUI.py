@@ -290,25 +290,6 @@ class Window(QMainWindow):
                 percentage = int(target_size_str[:-1]) / 100.0
                 target_size = (int(image_shape_temp[0] * percentage), int(image_shape_temp[1] * percentage))  # 使用 image_shape 确定原始尺寸
 
-
-            if "ORL" in self.dataset_path:
-                data, labels, image_shape = read_ORL_images(self.dataset_path, target_size=target_size)
-                if method == "PCA":
-                    data_by_pca = PCA(data.T, d)
-                else:
-                    data_by_pca = PCA(data.T, p)
-                train_data, train_labels, test_data, test_labels = train_test_split(data_by_pca, labels, train_test_split_ratio=train_test_split_ratio)
-            
-            elif "MNIST_ORG" in self.dataset_path:
-                train_data, train_labels, test_data, test_labels, image_shape = read_mnist_dataset(self.dataset_path, fraction=fraction)
-
-            elif "mini" in self.dataset_path:
-                if method == "PCA":
-                    data_by_pca = PCA(data.T, d)
-                else:
-                    data_by_pca = PCA(data.T, p)
-                train_data, train_labels, test_data, test_labels = train_test_split(data_by_pca, labels, train_test_split_ratio=train_test_split_ratio)
-
             runs = int(self.runs_input.text())  # 获取运行次数
             accuracies = []  # 用于存储每次运行的准确率
             start_time = time.time()  # 记录开始时间
@@ -317,6 +298,24 @@ class Window(QMainWindow):
             QApplication.processEvents()  # 强制刷新界面，立即显示按钮文本变更
 
             for _ in range(runs):
+                if "ORL" in self.dataset_path:
+                    data, labels, image_shape = read_ORL_images(self.dataset_path, target_size=target_size)
+                    if method == "PCA":
+                        data_by_pca = PCA(data.T, d)
+                    else:
+                        data_by_pca = PCA(data.T, p)
+                    train_data, train_labels, test_data, test_labels = train_test_split(data_by_pca, labels, train_test_split_ratio=train_test_split_ratio)
+                
+                elif "MNIST_ORG" in self.dataset_path:
+                    train_data, train_labels, test_data, test_labels, image_shape = read_mnist_dataset(self.dataset_path, fraction=fraction)
+
+                elif "mini" in self.dataset_path:
+                    if method == "PCA":
+                        data_by_pca = PCA(data.T, d)
+                    else:
+                        data_by_pca = PCA(data.T, p)
+                    train_data, train_labels, test_data, test_labels = train_test_split(data_by_pca, labels, train_test_split_ratio=train_test_split_ratio)
+
                 rate = 0.0  # 初始化识别率
                 if method == "DLPP":
                     # 调用 DLPP 函数并接收返回的中间变量信息
