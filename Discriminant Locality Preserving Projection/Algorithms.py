@@ -409,7 +409,7 @@ def read_mnist_dataset(dataset_dir, fraction=0.2):
 
 
 # 测试DLPP, LPP, PCA要查询的图像
-def test_image(i, train_labels, test_labels, query, weight_matrix): #最近邻分类器
+def Nearest_classifier(i, train_labels, test_labels, query, weight_matrix): #最近邻分类器
     # 计算测试图像的权重向量
     query = query.reshape(-1, 1)
     # 计算测试图像权重与数据集中每个人脸权重的欧氏距离
@@ -430,15 +430,35 @@ def KNN_classifier(i, train_labels, test_labels, query, weight_matrix, k): #k近
     euclidean_distances = np.linalg.norm(weight_matrix - query, axis=0)
     # 找到最近的k个人脸
     closest_indices = np.argsort(euclidean_distances)[:k]
-    # 判断最近的k个人脸中占比最多的标签
+    # 获取最近的k个人脸的标签
     closest_labels = train_labels[closest_indices]
     closest_labels = closest_labels.ravel()  # 将多维数组转换为一维数组
-    best_match_label = np.bincount(closest_labels).argmax()
+    print('closest_labels:', closest_labels)
+
+    # 判断最近的k个人脸中占比最多的标签
+    counts = np.bincount(closest_labels)
+    max_count = np.max(counts)
+    print('counts:', counts)
+    unique_labels = np.where(counts == max_count)[0]  # 找到占比最多的标签
+    print('unique_labels:', unique_labels)
+    if len(unique_labels) == 1:  # 如果占比最多的标签唯一，则直接返回该标签
+        best_match_label = unique_labels[0]
+    else:  # 如果有多个标签占比最多，则选择欧氏距离最近的那个
+        closest_distances = euclidean_distances[closest_indices]
+        print("closest_distances:", closest_distances)
+        min_distance_index = np.argmin(closest_distances)
+        print("min_distance_index", min_distance_index)
+        best_match_label = closest_labels[min_distance_index]
+    print('best_match_label:', best_match_label)
+
     # 判断是否匹配正确
     if best_match_label == test_labels[i]:
         return True
     else:
         return False
+
+
+
 
 # 测试LDA要查询的图像
 def test_query_class_sample(W, query_image, j, overall_mean, train_data, train_labels, test_labels):

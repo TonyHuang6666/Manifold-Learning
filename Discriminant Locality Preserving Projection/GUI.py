@@ -22,7 +22,7 @@ class Window(QMainWindow):
         # 数据集的选择与划分
         self.dataset_label = QLabel("请选择数据集文件夹:")
         self.main_layout.addWidget(self.dataset_label)
-        self.default_dataset_path = "C:\\Users\\Tony\\OneDrive - email.szu.edu.cn\\Manifold Learning\\Discriminant Locality Preserving Projection\\ORL"
+        self.default_dataset_path = "D:\Manifold-Learning\Discriminant Locality Preserving Projection\ORL"
         self.dataset_path_label = QLabel(f"数据集默认路径: {self.default_dataset_path}")  # 显示默认数据集文件夹的路径
         self.main_layout.addWidget(self.dataset_path_label)
         self.dataset_button = QPushButton("选择其他数据集")
@@ -104,6 +104,13 @@ class Window(QMainWindow):
         self.t_input = QLineEdit()
         self.main_layout.addWidget(self.t_input)
 
+        self.classifier_label = QLabel("请选择分类器:")
+        self.main_layout.addWidget(self.classifier_label)
+        self.classifier_combo = QComboBox()
+        self.classifier_combo.addItem("Nearest Neighbor")
+        self.classifier_combo.addItem("K-Nearest Neighbor")
+        self.main_layout.addWidget(self.classifier_combo)
+
         # 输入运行次数
         self.runs_label = QLabel("请输入运行次数:")
         self.main_layout.addWidget(self.runs_label)
@@ -124,8 +131,8 @@ class Window(QMainWindow):
         self.info_textedit.setReadOnly(True)  # 设置为只读模式
         self.main_layout.addWidget(self.info_textedit)
 
-        self.eigenfaces_label = QLabel("最后一次运行的特征图像显示:")
-        self.main_layout.addWidget(self.eigenfaces_label)
+        self.eigenimages_label = QLabel("最后一次运行的特征图像显示:")
+        self.main_layout.addWidget(self.eigenimages_label)
 
         self.canvas = FigureCanvas(plt.figure())
         self.main_layout.addWidget(self.canvas)
@@ -228,7 +235,7 @@ class Window(QMainWindow):
 
         #如果读取的是ORL数据集，即self.dataset_path中含有"ORL"字符串
         if "ORL" in self.dataset_path:
-            data, labels, faceshape = read_ORL_images(self.dataset_path, target_size=None)
+            data, labels, imageshape = read_ORL_images(self.dataset_path, target_size=None)
             train_test_split_ratio = float(self.train_test_split_combo.currentText())
             train_data, train_labels, test_data, test_labels = train_test_split(data, labels, train_test_split_ratio=train_test_split_ratio)
         #如果读取的是MNIST数据集，即self.dataset_path中含有"MNIST"字符串
@@ -263,10 +270,11 @@ class Window(QMainWindow):
             lpp_method = self.lpp_method_combo.currentText()
             train_test_split_ratio = float(self.train_test_split_combo.currentText())
             target_size_str = self.target_size_combo.currentText()
+            classifier = self.classifier_combo.currentText()
 
             #如果读取的是ORL数据集，即self.dataset_path中含有"ORL"字符串
             if "ORL" in self.dataset_path:
-                data_temp, labels_temp, faceshape_temp = read_ORL_images(self.dataset_path, target_size=None)
+                data_temp, labels_temp, image_shape_temp = read_ORL_images(self.dataset_path, target_size=None)
                 train_test_split_ratio = float(self.train_test_split_combo.currentText())
             #如果读取的是MNIST数据集，即self.dataset_path中含有"MNIST"字符串
             elif "MNIST_ORG" in self.dataset_path:
@@ -299,7 +307,7 @@ class Window(QMainWindow):
 
             for _ in range(runs):
                 if "ORL" in self.dataset_path:
-                    data, labels, faceshape = read_ORL_images(self.dataset_path, target_size=target_size)
+                    data, labels, image_shape = read_ORL_images(self.dataset_path, target_size=target_size)
                     if method == "PCA":
                         data_by_pca = PCA(data.T, d)
                     else:
@@ -338,8 +346,10 @@ class Window(QMainWindow):
                     wrong_times = 0
                     right_times = 0
                     for i in range(test_data.shape[0]):
-                        #flag = test_image(i, train_labels, test_labels, test_data[:,i], weight_matrix)
-                        flag = test_image(i, train_labels, test_labels, test_data[:,i], weight_matrix)
+                        if classifier == "K-Nearest Neighbor":
+                            flag = KNN_classifier(i, train_labels, test_labels, test_data[:,i], weight_matrix, k)
+                        else:
+                            flag = Nearest_classifier(i, train_labels, test_labels, test_data[:,i], weight_matrix)
                         if flag:
                             right_times += 1
                         else:
@@ -363,7 +373,10 @@ class Window(QMainWindow):
                     wrong_times = 0
                     right_times = 0
                     for i in range(test_data.shape[0]):
-                        flag = test_image(i, train_labels, test_labels, test_data[:,i], weight_matrix)
+                        if classifier == "K-Nearest Neighbor":
+                            flag = KNN_classifier(i, train_labels, test_labels, test_data[:,i], weight_matrix, k)
+                        else:
+                            flag = Nearest_classifier(i, train_labels, test_labels, test_data[:,i], weight_matrix)
                         if flag:
                             right_times += 1
                         else:
@@ -372,7 +385,7 @@ class Window(QMainWindow):
 
                 elif method == "MLDA":
                     # 调用 MLDA 函数并接收返回的中间变量信息
-                    eigenfaces, overall_mean, classes_means, Z, Sb, Sw, W_value = MLDA(train_data, train_labels, image_shape, d)
+                    eigenimages, overall_mean, classes_means, Z, Sb, Sw, W_value = MLDA(train_data, train_labels, image_shape, d)
                     # 将最后一次运行的信息显示在文本编辑框中
                     if _ == runs - 1:
                         # 将信息显示在文本编辑框中
@@ -385,12 +398,12 @@ class Window(QMainWindow):
                         self.show_info("类间散度矩阵形状:", Sb.shape)
                         self.show_info("类内散度矩阵形状:", Sw.shape)
                         self.show_info("投影矩阵形状:", W_value.shape)
-                        self.show_info("特征图像形状:", eigenfaces.shape)
+                        self.show_info("特征图像形状:", eigenimages.shape)
                     # 识别率统计
                     wrong_times = 0
                     right_times = 0
                     for i in range(test_data.shape[0]):
-                        flag = test_query_class_sample(eigenfaces, test_data[i], i, overall_mean, train_data, train_labels, test_labels)
+                        flag = test_query_class_sample(eigenimages, test_data[i], i, overall_mean, train_data, train_labels, test_labels)
                         if flag:
                                     right_times += 1         
                         else:
@@ -408,7 +421,7 @@ class Window(QMainWindow):
                     wrong_times = 0
                     right_times = 0
                     for i in range(test_data.shape[0]):
-                        flag = test_image(i, train_labels, test_labels, test_data[i], train_data.T)
+                        flag = Nearest_classifier(i, train_labels, test_labels, test_data[i], train_data.T)
                         if flag:
                             right_times += 1
                         else:
@@ -416,7 +429,7 @@ class Window(QMainWindow):
                     rate = right_times / test_data.shape[0]
 
                 accuracies.append(rate)  # 记录准确率
-            print(accuracies)
+            #print(accuracies)
 
             average_accuracy = np.mean(accuracies)  # 计算平均准确率
 
@@ -427,7 +440,7 @@ class Window(QMainWindow):
             self.info_label.setText(f"平均图像识别正确率: {average_accuracy}\n程序运行时间: {execution_time:.2f} 秒")
 
             # 显示特征脸图像
-            #self.show_eigenfaces(eigenfaces, image_shape)
+            #self.show_eigenimages(eigenimages, image_shape)
 
         except Exception as e:
             # 弹出错误窗口显示报错原因
@@ -442,19 +455,19 @@ class Window(QMainWindow):
         # 将信息追加显示在文本编辑框中
         self.info_textedit.append(f"{title}: {info}")
 
-    def show_eigenfaces(self, eigenfaces, image_shape):
+    def show_eigenimages(self, eigenimages, image_shape):
         # 清空之前的图像
         self.canvas.figure.clear()
 
         # 计算特征脸的行数和列数以填充整个窗口
-        num_faces = eigenfaces.shape[1]
-        num_cols = int(np.ceil(np.sqrt(num_faces)))
-        num_rows = int(np.ceil(num_faces / num_cols))
+        num_images = eigenimages.shape[1]
+        num_cols = int(np.ceil(np.sqrt(num_images)))
+        num_rows = int(np.ceil(num_images / num_cols))
 
         # 显示特征脸并取消坐标轴
-        for i in range(num_faces):
+        for i in range(num_images):
             ax = self.canvas.figure.add_subplot(num_rows, num_cols, i + 1)
-            ax.imshow(eigenfaces[:, i].reshape(image_shape), cmap="gray")
+            ax.imshow(eigenimages[:, i].reshape(image_shape), cmap="gray")
             ax.axis('off')
 
         # 刷新画布
@@ -476,13 +489,18 @@ class Window(QMainWindow):
             self.d_input.setVisible(True)
             self.lpp_method_label.setVisible(False)
             self.lpp_method_combo.setVisible(False)
+            self.classifier_label.setVisible(False)
+            self.classifier_combo.setVisible(False)
         elif selected_method == "LPP": 
             if selected_lpp_method == "Adaptive epsilon":
                 self.k_label.setVisible(False)
                 self.k_input.setVisible(False)
+                self.classifier_combo.setVisible(False)
             else:
                 self.k_label.setVisible(True)
                 self.k_input.setVisible(True)
+                self.classifier_label.setVisible(False)
+                self.classifier_combo.setVisible(True)
             self.t_label.setVisible(True)
             self.t_input.setVisible(True)
             self.p_label.setVisible(True)
@@ -495,9 +513,12 @@ class Window(QMainWindow):
             if selected_lpp_method == "Adaptive epsilon":
                 self.k_label.setVisible(False)
                 self.k_input.setVisible(False)
+                self.classifier_label.setVisible(False)
+                self.classifier_combo.setVisible(False)
             else:
                 self.k_label.setVisible(True)
                 self.k_input.setVisible(True)
+                self.classifier_combo.setVisible(True)
             self.t_label.setVisible(True)
             self.t_input.setVisible(True)
             self.p_label.setVisible(True)
@@ -517,6 +538,8 @@ class Window(QMainWindow):
             self.d_input.setVisible(True)
             self.lpp_method_label.setVisible(False)
             self.lpp_method_combo.setVisible(False)
+            self.classifier_combo.setVisible(False)
+            self.classifier_combo.setCurrentText("Nearest Neighbor")
 
 if __name__ == "__main__":
     app = QApplication(argv)
