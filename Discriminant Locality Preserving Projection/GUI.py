@@ -11,7 +11,7 @@ class Window(QMainWindow):
     def __init__(self):
         super().__init__()
 
-        self.setWindowTitle("DLPP LPP MLDA PCA 图像特征提取与识别程序")
+        self.setWindowTitle("基于流形学习的模式识别程序")
         self.setGeometry(0, 0, 1200, 1300)
         self.center_on_screen()
         self.central_widget = QWidget()
@@ -287,10 +287,9 @@ class Window(QMainWindow):
                 digits = load_digits()
                 data = digits.data
                 labels = digits.target
-                image_shape_temp = None
+                image_shape_temp = (8, 8)
                 image_shape = (8, 8)# 8*8尺寸已经足够小，不需要缩放
                 
-
             # 按选择缩放图像
             if target_size_str == "100%":
                 target_size = None
