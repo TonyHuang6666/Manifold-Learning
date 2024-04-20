@@ -409,7 +409,7 @@ def read_mnist_dataset(dataset_dir, fraction=0.2):
 
 
 # 测试DLPP, LPP, PCA要查询的图像
-def test_image(i, train_labels, test_labels, query, weight_matrix):
+def test_image(i, train_labels, test_labels, query, weight_matrix): #最近邻分类器
     # 计算测试图像的权重向量
     query = query.reshape(-1, 1)
     # 计算测试图像权重与数据集中每个人脸权重的欧氏距离
@@ -423,6 +423,22 @@ def test_image(i, train_labels, test_labels, query, weight_matrix):
     else:
         flag = False
     return flag
+
+def KNN_classifier(i, train_labels, test_labels, query, weight_matrix, k): #k近邻分类器
+    query = query.reshape(-1, 1)
+    # 计算测试图像权重与数据集中每个人脸权重的欧氏距离
+    euclidean_distances = np.linalg.norm(weight_matrix - query, axis=0)
+    # 找到最近的k个人脸
+    closest_indices = np.argsort(euclidean_distances)[:k]
+    # 判断最近的k个人脸中占比最多的标签
+    closest_labels = train_labels[closest_indices]
+    closest_labels = closest_labels.ravel()  # 将多维数组转换为一维数组
+    best_match_label = np.bincount(closest_labels).argmax()
+    # 判断是否匹配正确
+    if best_match_label == test_labels[i]:
+        return True
+    else:
+        return False
 
 # 测试LDA要查询的图像
 def test_query_class_sample(W, query_image, j, overall_mean, train_data, train_labels, test_labels):

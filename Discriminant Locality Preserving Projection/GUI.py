@@ -228,7 +228,7 @@ class Window(QMainWindow):
 
         #如果读取的是ORL数据集，即self.dataset_path中含有"ORL"字符串
         if "ORL" in self.dataset_path:
-            data, labels, image_shape = read_ORL_images(self.dataset_path, target_size=None)
+            data, labels, faceshape = read_images(self.dataset_path, target_size=None)
             train_test_split_ratio = float(self.train_test_split_combo.currentText())
             train_data, train_labels, test_data, test_labels = train_test_split(data, labels, train_test_split_ratio=train_test_split_ratio)
         #如果读取的是MNIST数据集，即self.dataset_path中含有"MNIST"字符串
@@ -266,8 +266,8 @@ class Window(QMainWindow):
 
             #如果读取的是ORL数据集，即self.dataset_path中含有"ORL"字符串
             if "ORL" in self.dataset_path:
-                data, labels, image_shape_temp = read_ORL_images(self.dataset_path, target_size=None)
-
+                data_temp, labels_temp, faceshape_temp = read_images(self.dataset_path, target_size=None)
+                train_test_split_ratio = float(self.train_test_split_combo.currentText())
             #如果读取的是MNIST数据集，即self.dataset_path中含有"MNIST"字符串
             elif "MNIST_ORG" in self.dataset_path:
                 fraction = float(self.mnist_split_combo.currentText())
@@ -299,7 +299,7 @@ class Window(QMainWindow):
 
             for _ in range(runs):
                 if "ORL" in self.dataset_path:
-                    data, labels, image_shape = read_ORL_images(self.dataset_path, target_size=target_size)
+                    data, labels, faceshape = read_images(self.dataset_path, target_size=target_size)
                     if method == "PCA":
                         data_by_pca = PCA(data.T, d)
                     else:
@@ -333,10 +333,12 @@ class Window(QMainWindow):
                         self.show_info("目标函数形状:", objective_value.shape)
                         self.show_info("特征图像形状:", eigenvectors.shape)
                         self.show_info("权重矩阵形状:", weight_matrix.shape)
+                    
                     # 识别率统计
                     wrong_times = 0
                     right_times = 0
                     for i in range(test_data.shape[0]):
+                        #flag = test_image(i, train_labels, test_labels, test_data[:,i], weight_matrix)
                         flag = test_image(i, train_labels, test_labels, test_data[:,i], weight_matrix)
                         if flag:
                             right_times += 1
