@@ -228,7 +228,7 @@ class Window(QMainWindow):
 
         #如果读取的是ORL数据集，即self.dataset_path中含有"ORL"字符串
         if "ORL" in self.dataset_path:
-            data, labels, faceshape = read_images(self.dataset_path, target_size=None)
+            data, labels, faceshape = read_ORL_images(self.dataset_path, target_size=None)
             train_test_split_ratio = float(self.train_test_split_combo.currentText())
             train_data, train_labels, test_data, test_labels = train_test_split(data, labels, train_test_split_ratio=train_test_split_ratio)
         #如果读取的是MNIST数据集，即self.dataset_path中含有"MNIST"字符串
@@ -266,7 +266,7 @@ class Window(QMainWindow):
 
             #如果读取的是ORL数据集，即self.dataset_path中含有"ORL"字符串
             if "ORL" in self.dataset_path:
-                data_temp, labels_temp, faceshape_temp = read_images(self.dataset_path, target_size=None)
+                data_temp, labels_temp, faceshape_temp = read_ORL_images(self.dataset_path, target_size=None)
                 train_test_split_ratio = float(self.train_test_split_combo.currentText())
             #如果读取的是MNIST数据集，即self.dataset_path中含有"MNIST"字符串
             elif "MNIST_ORG" in self.dataset_path:
@@ -299,7 +299,7 @@ class Window(QMainWindow):
 
             for _ in range(runs):
                 if "ORL" in self.dataset_path:
-                    data, labels, faceshape = read_images(self.dataset_path, target_size=target_size)
+                    data, labels, faceshape = read_ORL_images(self.dataset_path, target_size=target_size)
                     if method == "PCA":
                         data_by_pca = PCA(data.T, d)
                     else:
