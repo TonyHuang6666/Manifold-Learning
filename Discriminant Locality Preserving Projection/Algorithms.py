@@ -192,22 +192,16 @@ def compute_class_scatter_matrix(Z):
 def MLDA(train_data, train_labels, faceshape, d):
     # 计算每个类别的均值矩阵
     classes_means = compute_classes_mean_matrix(train_data, train_labels)
-    print('classes_means shape:', classes_means.shape)
     # 计算所有类别的整体均值矩阵
     overall_mean = compute_overall_mean_matrix(classes_means)
-    print('overall_mean shape:', overall_mean.shape)
     # 计算中心类别矩阵
     Z = compute_center_class_matrix(train_data, train_labels, classes_means)
-    print('Z shape:', Z.shape)
     # 计算类间散布矩阵
     Sb = compute_between_class_scatter_matrix(classes_means, overall_mean)
-    print('Sb shape:', Sb.shape)
     # 计算类内散布矩阵
     Sw = compute_class_scatter_matrix(Z)
-    print('Sw shape:', Sw.shape)
     # 计算投影矩阵W
-    W_value = np.dot(np.linalg.inv(Sw), Sb)
-    print('W_value shape:', W_value.shape)  
+    W_value = np.dot(np.linalg.inv(Sw), Sb) 
     # 计算广义特征值问题的特征值和特征向量，提取前d个最大特征值对应的特征向量
     eigen_values, eigen_vectors = eigh(W_value, eigvals=((faceshape[0] * faceshape[1]-d),(faceshape[0] * faceshape[1]-1)))  # 计算特征值和特征向量
     return eigen_vectors, overall_mean, classes_means, Z, Sb, Sw, W_value
@@ -463,18 +457,15 @@ def KNN_classifier(i, train_labels, test_labels, query, weight_matrix, k): #k近
     else:
         return False
 
-
-
-
 # 测试LDA要查询的图像
-def test_query_class_sample(W, query_image, j, train_data, train_labels, test_labels):
-    # 计算查询图像的线性判别函数值,即计算 d(Q) = W^T (Q - P)
-    d = np.dot(W.T, query_image)
+def test_query_class_sample(eigenimages, query_image, j, train_data, train_labels, test_labels):
+    # 计算查询图像的线性判别函数值,即计算 d(Q) = eigenimages^T (Q - P)
+    d = np.dot(eigenimages.T, query_image)
     # 计算 ||d||
     discriminant_values = []
     for i in range(train_data.shape[0]):
         train_image = train_data[i]
-        train_d = np.dot(W.T, train_image)
+        train_d = np.dot(eigenimages.T, train_image)
         discriminant_value = np.linalg.norm(d - train_d)
         discriminant_values.append(discriminant_value)
     # 找到匹配的样本图像索引
