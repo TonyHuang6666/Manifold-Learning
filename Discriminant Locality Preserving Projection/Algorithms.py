@@ -263,7 +263,7 @@ def DLPP(train_data, train_labels, d, lpp_method, k, t):
 
 
 # 读取数据集
-def read_ORL_images(dataset_dir, target_size=None):
+def read_ORL_UMIST_images(dataset_dir, target_size=None):
     data = []  # 存储图像数据的列表
     labels = []  # 存储标签的列表
     faceshape = [] # 存储图像形状

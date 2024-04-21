@@ -233,9 +233,9 @@ class Window(QMainWindow):
         # 获取当前选择的数据集
         selected_dataset = self.dataset_path
 
-        #如果读取的是ORL数据集，即self.dataset_path中含有"ORL"字符串
+        #如果读取的是ORL数据集或者是UMIST数据集，即self.dataset_path中含有"ORL"字符串或者"UMIST"字符串
         if "ORL" in self.dataset_path:
-            data, labels, imageshape = read_ORL_images(self.dataset_path, target_size=None)
+            data, labels, imageshape = read_ORL_UMIST_images(self.dataset_path, target_size=None)
             train_test_split_ratio = float(self.train_test_split_combo.currentText())
             train_data, train_labels, test_data, test_labels = train_test_split(data, labels, train_test_split_ratio=train_test_split_ratio)
         #如果读取的是MNIST数据集，即self.dataset_path中含有"MNIST"字符串
@@ -250,6 +250,9 @@ class Window(QMainWindow):
             target = digits.target
             train_test_split_ratio = float(self.train_test_split_combo.currentText())
             train_data, train_labels, test_data, test_labels = train_test_split(data, target, train_test_split_ratio=train_test_split_ratio)
+        elif "UMIST" in self.dataset_path:
+            #什么也不做
+            return 0
         else:
             raise ValueError(f"未知数据集: {selected_dataset}")
         num_classes = len(np.unique(train_labels))  # 类别数量
@@ -272,9 +275,9 @@ class Window(QMainWindow):
             target_size_str = self.target_size_combo.currentText()
             classifier = self.classifier_combo.currentText()
 
-            #如果读取的是ORL数据集，即self.dataset_path中含有"ORL"字符串
-            if "ORL" in self.dataset_path:
-                data_temp, labels_temp, image_shape_temp = read_ORL_images(self.dataset_path, target_size=None)
+            #如果读取的是ORL数据集或者是UMIST数据集，即self.dataset_path中含有"ORL"字符串或者"UMIST"字符串
+            if "ORL" in self.dataset_path or "UMIST" in self.dataset_path:
+                data_temp, labels_temp, image_shape_temp = read_ORL_UMIST_images(self.dataset_path, target_size=None)
                 train_test_split_ratio = float(self.train_test_split_combo.currentText())
             #如果读取的是MNIST数据集，即self.dataset_path中含有"MNIST"字符串
             elif "MNIST_ORG" in self.dataset_path:
@@ -305,8 +308,8 @@ class Window(QMainWindow):
             QApplication.processEvents()  # 强制刷新界面，立即显示按钮文本变更
 
             for _ in range(runs):
-                if "ORL" in self.dataset_path:
-                    images, labels, image_shape = read_ORL_images(self.dataset_path, target_size=target_size)
+                if "ORL" in self.dataset_path or "UMIST" in self.dataset_path:
+                    images, labels, image_shape = read_ORL_UMIST_images(self.dataset_path, target_size=target_size)
                     if method == "PCA":
                         data = PCA(images.T, d)
                     elif method == "MLDA":
