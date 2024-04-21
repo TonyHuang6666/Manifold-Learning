@@ -192,16 +192,22 @@ def compute_class_scatter_matrix(Z):
 def MLDA(train_data, train_labels, faceshape, d):
     # 计算每个类别的均值矩阵
     classes_means = compute_classes_mean_matrix(train_data, train_labels)
+    print('classes_means shape:', classes_means.shape)
     # 计算所有类别的整体均值矩阵
     overall_mean = compute_overall_mean_matrix(classes_means)
+    print('overall_mean shape:', overall_mean.shape)
     # 计算中心类别矩阵
     Z = compute_center_class_matrix(train_data, train_labels, classes_means)
+    print('Z shape:', Z.shape)
     # 计算类间散布矩阵
     Sb = compute_between_class_scatter_matrix(classes_means, overall_mean)
+    print('Sb shape:', Sb.shape)
     # 计算类内散布矩阵
     Sw = compute_class_scatter_matrix(Z)
+    print('Sw shape:', Sw.shape)
     # 计算投影矩阵W
-    W_value = np.dot(np.linalg.inv(Sw), Sb)  
+    W_value = np.dot(np.linalg.inv(Sw), Sb)
+    print('W_value shape:', W_value.shape)  
     # 计算广义特征值问题的特征值和特征向量，提取前d个最大特征值对应的特征向量
     eigen_values, eigen_vectors = eigh(W_value, eigvals=((faceshape[0] * faceshape[1]-d),(faceshape[0] * faceshape[1]-1)))  # 计算特征值和特征向量
     return eigen_vectors, overall_mean, classes_means, Z, Sb, Sw, W_value
