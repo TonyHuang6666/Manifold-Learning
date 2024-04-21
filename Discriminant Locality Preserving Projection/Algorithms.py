@@ -1,12 +1,13 @@
 # 导入库函数
 import numpy as np
-from os import listdir, path
+from os import listdir, path, remove
 from cv2 import imread, resize, INTER_AREA, IMREAD_GRAYSCALE
 from scipy.linalg import eigh
 from scipy.sparse.linalg import eigs
 from scipy.interpolate import interp1d
 from struct import unpack
 from sklearn.model_selection import train_test_split
+from PIL import Image
 
 ###############################PCA算法函数######################################
 # PCA实现函数
@@ -263,7 +264,7 @@ def DLPP(train_data, train_labels, d, lpp_method, k, t):
 
 
 # 读取数据集
-def read_ORL_UMIST_images(dataset_dir, target_size=None):
+def read_ORL_UMIST_yalefaces_images(dataset_dir, target_size=None):
     data = []  # 存储图像数据的列表
     labels = []  # 存储标签的列表
     faceshape = [] # 存储图像形状
@@ -271,10 +272,25 @@ def read_ORL_UMIST_images(dataset_dir, target_size=None):
         class_path = path.join(dataset_dir, class_dir)  # 类别文件夹路径
         for file_name in listdir(class_path):  # 遍历每个类别文件夹中的图像文件
             file_path = path.join(class_path, file_name)  # 图像文件路径
-            img = imread(file_path, IMREAD_GRAYSCALE)  # 读取灰度图像
-            # 如果指定了目标尺寸，则缩放图像
-            if target_size is not None:
-                img = resize(img, target_size, interpolation=INTER_AREA)
+            if file_name.endswith('.gif'):  # 如果文件格式为.gif
+                # 使用PIL库打开.gif文件
+                with Image.open(file_path) as img:
+                    # 转换为灰度图像
+                    img = img.convert('L')
+                    # 保存为.pgm格式
+                    pgm_file_path = file_path.replace('.gif', '.pgm')
+                    img.save(pgm_file_path)
+                    # 读取.pgm文件并继续后续处理
+                    img = imread(pgm_file_path, IMREAD_GRAYSCALE)
+                    # 如果指定了目标尺寸，则缩放图像
+                    if target_size is not None:
+                        img = resize(img, target_size, interpolation=INTER_AREA)
+                    remove(pgm_file_path)  # 删除临时保存的.pgm文件
+            else:
+                img = imread(file_path, IMREAD_GRAYSCALE)  # 读取灰度图像
+                # 如果指定了目标尺寸，则缩放图像
+                if target_size is not None:
+                    img = resize(img, target_size, interpolation=INTER_AREA)
             # 读取第一张灰度图像的大小作为图片形状
             if not faceshape:
                 faceshape = img.shape
@@ -323,52 +339,6 @@ def train_test_split(data, labels, train_test_split_ratio):
     
     return train_data, train_labels, test_data, test_labels
 
-"""
-# 读取MNIST数据集
-def read_mnist_dataset(dataset_dir, fraction=0.2, target_size=None):
-    def read_images(images_file, num_images, rows, cols):
-        with open(images_file, 'rb') as f:
-            magic, total_images = unpack('>II', f.read(8))
-            images = np.fromfile(f, dtype=np.uint8, count=num_images * rows * cols)
-            images = images.reshape(num_images, rows, cols)
-            if target_size is not None:
-                resized_images = []
-                for img in images:
-                    resized_img = resize(img, target_size, interpolation=INTER_AREA)
-                    resized_images.append(resized_img)
-                images = np.array(resized_images)
-        return images
-
-    def read_labels(labels_file, num_labels):
-        with open(labels_file, 'rb') as f:
-            magic, total_labels = unpack('>II', f.read(8))
-            labels = np.fromfile(f, dtype=np.uint8, count=num_labels)
-        return labels
-
-    train_images_file = path.join(dataset_dir, 'train-images.idx3-ubyte')
-    train_labels_file = path.join(dataset_dir, 'train-labels.idx1-ubyte')
-    test_images_file = path.join(dataset_dir, 't10k-images.idx3-ubyte')
-    test_labels_file = path.join(dataset_dir, 't10k-labels.idx1-ubyte')
-
-    # 获取数据集的原始数量和图像大小
-    with open(train_images_file, 'rb') as f:
-        magic, total_train_images, rows, cols = unpack('>IIII', f.read(16))
-    with open(test_images_file, 'rb') as f:
-        magic, total_test_images, rows, cols = unpack('>IIII', f.read(16))
-
-    # 计算要读取的数量
-    num_train_images = int(total_train_images * fraction)
-    num_test_images = int(total_test_images * fraction)
-
-    # 读取数据集
-    train_images = read_images(train_images_file, num_train_images, rows, cols)
-    train_labels = read_labels(train_labels_file, num_train_images).reshape(-1, 1)
-    test_images = read_images(test_images_file, num_test_images, rows, cols)
-    test_labels = read_labels(test_labels_file, num_test_images).reshape(-1, 1)
-
-    return train_images, train_labels, test_images, test_labels, (rows, cols)
-
-"""
 # 读取MNIST数据集
 def read_mnist_dataset(dataset_dir, fraction=0.2):
     def read_images(images_file, num_images, rows, cols):

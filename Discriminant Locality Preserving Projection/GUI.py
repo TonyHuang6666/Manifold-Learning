@@ -138,7 +138,7 @@ class Window(QMainWindow):
         self.main_layout.addWidget(self.canvas)
 
         # 初始/默认数据集路径变量
-        if "ORL" in self.default_dataset_path:
+        if "ORL" in self.default_dataset_path or "yalefaces" in self.default_dataset_path:
             self.dataset_path = self.default_dataset_path
             self.recommended_k_parameters()
             self.mnist_split_label.setVisible(False)
@@ -192,7 +192,7 @@ class Window(QMainWindow):
             self.dataset_path = QFileDialog.getExistingDirectory(self, "选择数据集文件夹", options=options)
             if self.dataset_path:
                 self.dataset_path_label.setText(f"数据集路径: {self.dataset_path}")
-            if "ORL" in self.dataset_path:
+            if "ORL" in self.dataset_path or "yalefaces" in self.dataset_path:
                 self.train_test_split_label.setVisible(True)
                 self.train_test_split_combo.setVisible(True)
                 self.target_size_label.setVisible(True)
@@ -234,8 +234,8 @@ class Window(QMainWindow):
         selected_dataset = self.dataset_path
 
         #如果读取的是ORL数据集或者是UMIST数据集，即self.dataset_path中含有"ORL"字符串或者"UMIST"字符串
-        if "ORL" in self.dataset_path:
-            data, labels, imageshape = read_ORL_UMIST_images(self.dataset_path, target_size=None)
+        if "ORL" in self.dataset_path or "yalefaces" in self.dataset_path:
+            data, labels, imageshape = read_ORL_UMIST_yalefaces_images(self.dataset_path, target_size=None)
             train_test_split_ratio = float(self.train_test_split_combo.currentText())
             train_data, train_labels, test_data, test_labels = train_test_split(data, labels, train_test_split_ratio=train_test_split_ratio)
         #如果读取的是MNIST数据集，即self.dataset_path中含有"MNIST"字符串
@@ -251,17 +251,20 @@ class Window(QMainWindow):
             train_test_split_ratio = float(self.train_test_split_combo.currentText())
             train_data, train_labels, test_data, test_labels = train_test_split(data, target, train_test_split_ratio=train_test_split_ratio)
         elif "UMIST" in self.dataset_path:
-            #什么也不做
-            return 0
+            data, labels, imageshape = read_ORL_UMIST_yalefaces_images(self.dataset_path, target_size=(32,32))
+            train_test_split_ratio = float(self.train_test_split_combo.currentText())
+            train_data, train_labels, test_data, test_labels = train_test_split(data, labels, train_test_split_ratio=train_test_split_ratio)
         else:
             raise ValueError(f"未知数据集: {selected_dataset}")
         num_classes = len(np.unique(train_labels))  # 类别数量
+        print("num_classes:", num_classes)
         num_samples_per_class = train_data.shape[0] // num_classes  # 每个类别的样本数
+        print("num_samples_per_class:", num_samples_per_class)
         k = int(num_samples_per_class - 1)  # 推荐的 k 值为每个类别的样本数减一
+        print("k:", k)
         self.k_input.setText(str(k))  # 推荐的 k 值
         return 0
         
-
     def execute_algorithm(self):
         try:
             # 获取用户输入的参数值
@@ -276,14 +279,13 @@ class Window(QMainWindow):
             classifier = self.classifier_combo.currentText()
 
             #如果读取的是ORL数据集或者是UMIST数据集，即self.dataset_path中含有"ORL"字符串或者"UMIST"字符串
-            if "ORL" in self.dataset_path or "UMIST" in self.dataset_path:
-                data_temp, labels_temp, image_shape_temp = read_ORL_UMIST_images(self.dataset_path, target_size=None)
+            if "ORL" in self.dataset_path or "yalefaces" in self.dataset_path:
+                data_temp, labels_temp, image_shape_temp = read_ORL_UMIST_yalefaces_images(self.dataset_path, target_size=None)
                 train_test_split_ratio = float(self.train_test_split_combo.currentText())
             #如果读取的是MNIST数据集，即self.dataset_path中含有"MNIST"字符串
             elif "MNIST_ORG" in self.dataset_path:
                 fraction = float(self.mnist_split_combo.currentText())
                 train_data, train_labels, test_data, test_labels, image_shape_temp = read_mnist_dataset(self.dataset_path, fraction=fraction)
-            
             #如果读取的是mini_mnist数据集，即self.dataset_path中含有"Reduced"字符串
             elif "mini" in self.dataset_path:
                 from sklearn.datasets import load_digits
@@ -292,7 +294,10 @@ class Window(QMainWindow):
                 labels = digits.target
                 image_shape_temp = (8, 8)
                 image_shape = (8, 8)# 8*8尺寸已经足够小，不需要缩放
-                
+            elif "UMIST" in self.dataset_path:
+                image_shape_temp = (32, 32)
+                image_shape = (32, 32)
+
             # 按选择缩放图像
             if target_size_str == "100%":
                 target_size = None
@@ -308,8 +313,8 @@ class Window(QMainWindow):
             QApplication.processEvents()  # 强制刷新界面，立即显示按钮文本变更
 
             for _ in range(runs):
-                if "ORL" in self.dataset_path or "UMIST" in self.dataset_path:
-                    images, labels, image_shape = read_ORL_UMIST_images(self.dataset_path, target_size=target_size)
+                if "ORL" in self.dataset_path or "UMIST" in self.dataset_path or "yalefaces" in self.dataset_path:
+                    images, labels, image_shape = read_ORL_UMIST_yalefaces_images(self.dataset_path, target_size=target_size)
                     if method == "PCA":
                         data = PCA(images.T, d)
                     elif method == "MLDA":
@@ -329,7 +334,7 @@ class Window(QMainWindow):
                     else:
                         data = PCA(images.T, p)
                     train_data, train_labels, test_data, test_labels = train_test_split(data, labels, train_test_split_ratio=train_test_split_ratio)
-
+        
                 rate = 0.0  # 初始化识别率
                 if method == "DLPP":
                     # 调用 DLPP 函数并接收返回的中间变量信息
