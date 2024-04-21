@@ -467,14 +467,14 @@ def KNN_classifier(i, train_labels, test_labels, query, weight_matrix, k): #k近
 
 
 # 测试LDA要查询的图像
-def test_query_class_sample(W, query_image, j, overall_mean, train_data, train_labels, test_labels):
+def test_query_class_sample(W, query_image, j, train_data, train_labels, test_labels):
     # 计算查询图像的线性判别函数值,即计算 d(Q) = W^T (Q - P)
-    d = np.dot(W.T, (query_image - overall_mean))
+    d = np.dot(W.T, query_image)
     # 计算 ||d||
     discriminant_values = []
     for i in range(train_data.shape[0]):
         train_image = train_data[i]
-        train_d = np.dot(W.T, (train_image - overall_mean))
+        train_d = np.dot(W.T, train_image)
         discriminant_value = np.linalg.norm(d - train_d)
         discriminant_values.append(discriminant_value)
     # 找到匹配的样本图像索引

@@ -406,7 +406,7 @@ class Window(QMainWindow):
                     wrong_times = 0
                     right_times = 0
                     for i in range(test_data.shape[0]):
-                        flag = test_query_class_sample(eigenimages, test_data[i], i, overall_mean, train_data, train_labels, test_labels)
+                        flag = test_query_class_sample(eigenimages, test_data[i], i, train_data, train_labels, test_labels)
                         if flag:
                                     right_times += 1         
                         else:
