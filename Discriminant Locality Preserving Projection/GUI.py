@@ -285,7 +285,7 @@ class Window(QMainWindow):
             elif "mini" in self.dataset_path:
                 from sklearn.datasets import load_digits
                 digits = load_digits()
-                data = digits.data
+                images = digits.data
                 labels = digits.target
                 image_shape_temp = (8, 8)
                 image_shape = (8, 8)# 8*8尺寸已经足够小，不需要缩放
@@ -306,22 +306,26 @@ class Window(QMainWindow):
 
             for _ in range(runs):
                 if "ORL" in self.dataset_path:
-                    data, labels, image_shape = read_ORL_images(self.dataset_path, target_size=target_size)
+                    images, labels, image_shape = read_ORL_images(self.dataset_path, target_size=target_size)
                     if method == "PCA":
-                        data_by_pca = PCA(data.T, d)
+                        data = PCA(images.T, d)
+                    elif method == "MLDA":
+                        data = images
                     else:
-                        data_by_pca = PCA(data.T, p)
-                    train_data, train_labels, test_data, test_labels = train_test_split(data_by_pca, labels, train_test_split_ratio=train_test_split_ratio)
+                        data = PCA(images.T, p)
+                    train_data, train_labels, test_data, test_labels = train_test_split(data, labels, train_test_split_ratio=train_test_split_ratio)
                 
                 elif "MNIST_ORG" in self.dataset_path:
                     train_data, train_labels, test_data, test_labels, image_shape = read_mnist_dataset(self.dataset_path, fraction=fraction)
 
                 elif "mini" in self.dataset_path:
                     if method == "PCA":
-                        data_by_pca = PCA(data.T, d)
+                        data = PCA(images.T, d)
+                    elif method == "MLDA":
+                        data = images
                     else:
-                        data_by_pca = PCA(data.T, p)
-                    train_data, train_labels, test_data, test_labels = train_test_split(data_by_pca, labels, train_test_split_ratio=train_test_split_ratio)
+                        data = PCA(images.T, p)
+                    train_data, train_labels, test_data, test_labels = train_test_split(data, labels, train_test_split_ratio=train_test_split_ratio)
 
                 rate = 0.0  # 初始化识别率
                 if method == "DLPP":
