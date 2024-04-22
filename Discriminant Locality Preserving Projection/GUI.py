@@ -257,11 +257,8 @@ class Window(QMainWindow):
         else:
             raise ValueError(f"未知数据集: {selected_dataset}")
         num_classes = len(np.unique(train_labels))  # 类别数量
-        print("num_classes:", num_classes)
         num_samples_per_class = train_data.shape[0] // num_classes  # 每个类别的样本数
-        print("num_samples_per_class:", num_samples_per_class)
         k = int(num_samples_per_class - 1)  # 推荐的 k 值为每个类别的样本数减一
-        print("k:", k)
         self.k_input.setText(str(k))  # 推荐的 k 值
         return 0
         
@@ -440,15 +437,16 @@ class Window(QMainWindow):
                     rate = right_times / test_data.shape[0]
 
                 accuracies.append(rate)  # 记录准确率
-            #print(accuracies)
 
             average_accuracy = np.mean(accuracies)  # 计算平均准确率
+            # 计算标准差
+            std_deviation = np.std(accuracies)
 
             end_time = time.time()  # 记录结束时间
             execution_time = end_time - start_time  # 计算执行时间
 
             # 更新信息显示
-            self.info_label.setText(f"平均图像识别正确率: {average_accuracy}\n程序运行时间: {execution_time:.2f} 秒")
+            self.info_label.setText(f"平均图像识别正确率: {average_accuracy}\n标准差: {std_deviation}\n执行时间: {execution_time:.2f} 秒")
 
             # 显示特征脸图像
             #self.show_eigenimages(eigenimages, image_shape)
