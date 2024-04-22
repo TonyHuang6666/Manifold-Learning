@@ -12,7 +12,7 @@ class Window(QMainWindow):
         super().__init__()
 
         self.setWindowTitle("基于流形学习的模式识别程序")
-        self.setGeometry(0, 0, 1200, 1300)
+        self.setGeometry(0, 0, 600, 650)
         self.center_on_screen()
         self.central_widget = QWidget()
         self.setCentralWidget(self.central_widget)
@@ -131,11 +131,11 @@ class Window(QMainWindow):
         self.info_textedit.setReadOnly(True)  # 设置为只读模式
         self.main_layout.addWidget(self.info_textedit)
 
-        self.eigenimages_label = QLabel("最后一次运行的特征图像显示:")
-        self.main_layout.addWidget(self.eigenimages_label)
+        #self.eigenimages_label = QLabel("最后一次运行的特征图像显示:")
+        #self.main_layout.addWidget(self.eigenimages_label)
 
-        self.canvas = FigureCanvas(plt.figure())
-        self.main_layout.addWidget(self.canvas)
+        #self.canvas = FigureCanvas(plt.figure())
+        #self.main_layout.addWidget(self.canvas)
 
         # 初始/默认数据集路径变量
         if "ORL" in self.default_dataset_path or "yalefaces" in self.default_dataset_path:
