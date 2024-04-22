@@ -12,7 +12,7 @@ class Window(QMainWindow):
         super().__init__()
 
         self.setWindowTitle("基于流形学习的模式识别程序")
-        self.setGeometry(0, 0, 1200, 1300)
+        self.setGeometry(0, 0, 600, 650)
         self.center_on_screen()
         self.central_widget = QWidget()
         self.setCentralWidget(self.central_widget)
@@ -62,12 +62,6 @@ class Window(QMainWindow):
         self.main_layout.addWidget(self.p_label)
         self.p_input = QLineEdit()
         self.main_layout.addWidget(self.p_input)
-
-        # 输入降维后的维度
-        self.d_label = QLabel("请输入降维后的维度d:")
-        self.main_layout.addWidget(self.d_label)
-        self.d_input = QLineEdit()
-        self.main_layout.addWidget(self.d_input)
 
         # 选择降维方法
         self.method_label = QLabel("请选择数据降维方法:")
@@ -124,18 +118,12 @@ class Window(QMainWindow):
         self.main_layout.addWidget(self.execute_button)
 
         # 信息显示框
-        self.info_label = QLabel("程序信息显示:")
+        self.info_label = QLabel("最后一次运行程序信息显示:")
         self.main_layout.addWidget(self.info_label)
 
         self.info_textedit = QTextEdit()  # 用于显示函数信息的文本编辑框
         self.info_textedit.setReadOnly(True)  # 设置为只读模式
         self.main_layout.addWidget(self.info_textedit)
-
-        self.eigenimages_label = QLabel("最后一次运行的特征图像显示:")
-        self.main_layout.addWidget(self.eigenimages_label)
-
-        self.canvas = FigureCanvas(plt.figure())
-        self.main_layout.addWidget(self.canvas)
 
         # 初始/默认数据集路径变量
         if "ORL" in self.default_dataset_path or "yalefaces" in self.default_dataset_path:
@@ -146,7 +134,6 @@ class Window(QMainWindow):
             self.target_size_combo.setCurrentText("35%")  # 设置初始值为x%,即长宽均为原来的x%且取整
             self.t_input.setText("100000")  # 默认值为100000
             self.p_input.setText("70")  # 默认值为100
-            self.d_input.setText("50")  # 默认值为70
         elif "MNIST_ORG" in self.default_dataset_path:
             self.dataset_path = self.default_dataset_path
             self.recommended_k_parameters()
@@ -158,7 +145,6 @@ class Window(QMainWindow):
             self.mnist_split_combo.setVisible(True)
             self.t_input.setText("1500")
             self.p_input.setText("70")
-            self.d_input.setText("50")
         elif "mini" in self.default_dataset_path:
             self.dataset_path = self.default_dataset_path
             self.recommended_k_parameters()
@@ -170,7 +156,6 @@ class Window(QMainWindow):
             self.train_test_split_combo.setVisible(True)
             self.t_input.setText("100000")
             self.p_input.setText("30")
-            self.d_input.setText("20")
 
 
     def center_on_screen(self):
@@ -202,7 +187,6 @@ class Window(QMainWindow):
                 self.target_size_combo.setCurrentText("35%")  # 设置初始值为x%,即长宽均为原来的x%且取整
                 self.t_input.setText("100000")  # 默认值为100000
                 self.p_input.setText("70")  # 默认值为70
-                self.d_input.setText("50")  # 默认值为50
             elif "MNIST_ORG" in self.dataset_path:
                 self.train_test_split_label.setVisible(False)
                 self.train_test_split_combo.setVisible(False)
@@ -212,7 +196,6 @@ class Window(QMainWindow):
                 self.mnist_split_combo.setVisible(True)
                 self.t_input.setText("1500")  # 默认值为1500
                 self.p_input.setText("70")  # 默认值为70
-                self.d_input.setText("50")  # 默认值为50
             elif "mini" in self.dataset_path:
                 self.train_test_split_label.setVisible(True)
                 self.train_test_split_combo.setVisible(True)
@@ -222,7 +205,6 @@ class Window(QMainWindow):
                 self.mnist_split_combo.setVisible(False)
                 self.t_input.setText("100000")  # 默认值为100000
                 self.p_input.setText("30")  # 默认值为30
-                self.d_input.setText("20")  # 默认值为20
             self.recommended_k_parameters()
         except Exception as e:
             # 弹出错误窗口显示报错原因
@@ -500,8 +482,6 @@ class Window(QMainWindow):
             self.t_input.setVisible(False)
             self.p_label.setVisible(False)
             self.p_input.setVisible(False)
-            self.d_label.setVisible(True)
-            self.d_input.setVisible(True)
             self.lpp_method_label.setVisible(False)
             self.lpp_method_combo.setVisible(False)
             self.classifier_label.setVisible(False)
@@ -520,8 +500,6 @@ class Window(QMainWindow):
             self.t_input.setVisible(True)
             self.p_label.setVisible(True)
             self.p_input.setVisible(True)
-            self.d_label.setVisible(True)
-            self.d_input.setVisible(True)
             self.lpp_method_label.setVisible(True)
             self.lpp_method_combo.setVisible(True)
         elif selected_method == "DLPP":
@@ -538,8 +516,6 @@ class Window(QMainWindow):
             self.t_input.setVisible(True)
             self.p_label.setVisible(True)
             self.p_input.setVisible(True)
-            self.d_label.setVisible(True)
-            self.d_input.setVisible(True)
             self.lpp_method_label.setVisible(True)
             self.lpp_method_combo.setVisible(True)
         elif selected_method == "PCA":
@@ -549,8 +525,6 @@ class Window(QMainWindow):
             self.t_input.setVisible(False)
             self.p_label.setVisible(False)
             self.p_input.setVisible(False)
-            self.d_label.setVisible(True)
-            self.d_input.setVisible(True)
             self.lpp_method_label.setVisible(False)
             self.lpp_method_combo.setVisible(False)
             self.classifier_combo.setVisible(False)
