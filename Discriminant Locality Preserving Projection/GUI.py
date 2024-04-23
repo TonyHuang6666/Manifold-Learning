@@ -22,7 +22,7 @@ class Window(QMainWindow):
         # 数据集的选择与划分
         self.dataset_label = QLabel("请选择数据集文件夹:")
         self.main_layout.addWidget(self.dataset_label)
-        self.default_dataset_path = "D:\Manifold-Learning\Discriminant Locality Preserving Projection\ORL"
+        self.default_dataset_path = "C:\\Users\\Tony\\Documents\\Manifold-Learning\\Discriminant Locality Preserving Projection\\ORL"
         self.dataset_path_label = QLabel(f"数据集默认路径: {self.default_dataset_path}")  # 显示默认数据集文件夹的路径
         self.main_layout.addWidget(self.dataset_path_label)
         self.dataset_button = QPushButton("选择其他数据集")
@@ -57,18 +57,6 @@ class Window(QMainWindow):
             self.target_size_combo.addItem(f"{percentage}%")
         self.main_layout.addWidget(self.target_size_combo)
 
-        # 输入PCA降维后的维度
-        self.p_label = QLabel("请输入通过PCA降噪后的维度p:")
-        self.main_layout.addWidget(self.p_label)
-        self.p_input = QLineEdit()
-        self.main_layout.addWidget(self.p_input)
-
-        # 输入降维后的维度
-        self.d_label = QLabel("请输入降维后的维度d:")
-        self.main_layout.addWidget(self.d_label)
-        self.d_input = QLineEdit()
-        self.main_layout.addWidget(self.d_input)
-
         # 选择降维方法
         self.method_label = QLabel("请选择数据降维方法:")
         self.main_layout.addWidget(self.method_label)
@@ -80,6 +68,12 @@ class Window(QMainWindow):
         self.method_combo.setCurrentText("DLPP")  # 设置初始值为当前选择
         self.method_combo.currentIndexChanged.connect(self.toggle_parameters_visibility)  # 连接方法选择框的信号与槽函数
         self.main_layout.addWidget(self.method_combo)
+
+        # 输入PCA降维后的维度
+        self.p_label = QLabel("请输入通过PCA降噪后的维度p:")
+        self.main_layout.addWidget(self.p_label)
+        self.p_input = QLineEdit()
+        self.main_layout.addWidget(self.p_input)
 
         # 选择LPP方法
         self.lpp_method_label = QLabel("请选择邻域选择方法:")
@@ -103,6 +97,12 @@ class Window(QMainWindow):
         self.main_layout.addWidget(self.t_label)
         self.t_input = QLineEdit()
         self.main_layout.addWidget(self.t_input)
+
+        # 输入降维后的维度
+        self.d_label = QLabel("请输入降维后的维度d:")
+        self.main_layout.addWidget(self.d_label)
+        self.d_input = QLineEdit()
+        self.main_layout.addWidget(self.d_input)
 
         self.classifier_label = QLabel("请选择分类器:")
         self.main_layout.addWidget(self.classifier_label)
