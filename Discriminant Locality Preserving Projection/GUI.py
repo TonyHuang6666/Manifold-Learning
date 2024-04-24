@@ -22,7 +22,8 @@ class Window(QMainWindow):
         # 数据集的选择与划分
         self.dataset_label = QLabel("请选择数据集文件夹:")
         self.main_layout.addWidget(self.dataset_label)
-        self.default_dataset_path = "D:\\Manifold-Learning\\Discriminant Locality Preserving Projection\\ORL"
+        self.default_dataset_path = "C:\\Users\\Tony\\Documents\\Manifold-Learning\\Discriminant Locality Preserving Projection\\ORL"
+        #AMD self.default_dataset_path = "D:\\Manifold-Learning\\Discriminant Locality Preserving Projection\\ORL"
         self.dataset_path_label = QLabel(f"数据集默认路径: {self.default_dataset_path}")  # 显示默认数据集文件夹的路径
         self.main_layout.addWidget(self.dataset_path_label)
         self.dataset_button = QPushButton("选择其他数据集")
@@ -104,12 +105,12 @@ class Window(QMainWindow):
         self.d_input = QLineEdit()
         self.main_layout.addWidget(self.d_input)
 
-        self.classifier_label = QLabel("请选择分类器:")
-        self.main_layout.addWidget(self.classifier_label)
-        self.classifier_combo = QComboBox()
-        self.classifier_combo.addItem("Nearest Neighbor")
-        self.classifier_combo.addItem("K-Nearest Neighbor")
-        self.main_layout.addWidget(self.classifier_combo)
+        #self.classifier_label = QLabel("请选择分类器:")
+        #self.main_layout.addWidget(self.classifier_label)
+        #self.classifier_combo = QComboBox()
+        #self.classifier_combo.addItem("Nearest Neighbor")
+        #self.classifier_combo.addItem("K-Nearest Neighbor")
+        #self.main_layout.addWidget(self.classifier_combo)
 
         # 输入运行次数
         self.runs_label = QLabel("请输入运行次数:")
@@ -273,7 +274,7 @@ class Window(QMainWindow):
             lpp_method = self.lpp_method_combo.currentText()
             train_test_split_ratio = float(self.train_test_split_combo.currentText())
             target_size_str = self.target_size_combo.currentText()
-            classifier = self.classifier_combo.currentText()
+            #classifier = self.classifier_combo.currentText()
 
             #如果读取的是ORL数据集或者是UMIST数据集，即self.dataset_path中含有"ORL"字符串或者"UMIST"字符串
             if "ORL" in self.dataset_path or "yalefaces" in self.dataset_path:
@@ -354,10 +355,10 @@ class Window(QMainWindow):
                     wrong_times = 0
                     right_times = 0
                     for i in range(test_data.shape[0]):
-                        if classifier == "K-Nearest Neighbor":
-                            flag = KNN_classifier(i, train_labels, test_labels, test_data[:,i], weight_matrix, k)
-                        else:
-                            flag = Nearest_classifier(i, train_labels, test_labels, test_data[:,i], weight_matrix)
+                        #if classifier == "K-Nearest Neighbor":
+                            #flag = KNN_classifier(i, train_labels, test_labels, test_data[:,i], weight_matrix, k)
+                        #else:
+                        flag = Nearest_classifier(i, train_labels, test_labels, test_data[:,i], weight_matrix)
                         if flag:
                             right_times += 1
                         else:
@@ -381,10 +382,10 @@ class Window(QMainWindow):
                     wrong_times = 0
                     right_times = 0
                     for i in range(test_data.shape[0]):
-                        if classifier == "K-Nearest Neighbor":
-                            flag = KNN_classifier(i, train_labels, test_labels, test_data[:,i], weight_matrix, k)
-                        else:
-                            flag = Nearest_classifier(i, train_labels, test_labels, test_data[:,i], weight_matrix)
+                        #if classifier == "K-Nearest Neighbor":
+                            #flag = KNN_classifier(i, train_labels, test_labels, test_data[:,i], weight_matrix, k)
+                        #else:
+                        flag = Nearest_classifier(i, train_labels, test_labels, test_data[:,i], weight_matrix)
                         if flag:
                             right_times += 1
                         else:
@@ -498,18 +499,18 @@ class Window(QMainWindow):
             self.d_input.setVisible(True)
             self.lpp_method_label.setVisible(False)
             self.lpp_method_combo.setVisible(False)
-            self.classifier_label.setVisible(False)
-            self.classifier_combo.setVisible(False)
+            #self.classifier_label.setVisible(False)
+            #self.classifier_combo.setVisible(False)
         elif selected_method == "LPP": 
             if selected_lpp_method == "Adaptive epsilon":
                 self.k_label.setVisible(False)
                 self.k_input.setVisible(False)
-                self.classifier_combo.setVisible(False)
+                #self.classifier_combo.setVisible(False)
             else:
                 self.k_label.setVisible(True)
                 self.k_input.setVisible(True)
-                self.classifier_label.setVisible(False)
-                self.classifier_combo.setVisible(True)
+                #self.classifier_label.setVisible(False)
+                #self.classifier_combo.setVisible(True)
             self.t_label.setVisible(True)
             self.t_input.setVisible(True)
             self.p_label.setVisible(True)
@@ -522,12 +523,12 @@ class Window(QMainWindow):
             if selected_lpp_method == "Adaptive epsilon":
                 self.k_label.setVisible(False)
                 self.k_input.setVisible(False)
-                self.classifier_label.setVisible(False)
-                self.classifier_combo.setVisible(False)
+                #self.classifier_label.setVisible(False)
+                #self.classifier_combo.setVisible(False)
             else:
                 self.k_label.setVisible(True)
                 self.k_input.setVisible(True)
-                self.classifier_combo.setVisible(True)
+                #self.classifier_combo.setVisible(True)
             self.t_label.setVisible(True)
             self.t_input.setVisible(True)
             self.p_label.setVisible(True)
@@ -547,8 +548,8 @@ class Window(QMainWindow):
             self.d_input.setVisible(True)
             self.lpp_method_label.setVisible(False)
             self.lpp_method_combo.setVisible(False)
-            self.classifier_combo.setVisible(False)
-            self.classifier_combo.setCurrentText("Nearest Neighbor")
+            #self.classifier_combo.setVisible(False)
+            #self.classifier_combo.setCurrentText("Nearest Neighbor")
 
 if __name__ == "__main__":
     app = QApplication(argv)
