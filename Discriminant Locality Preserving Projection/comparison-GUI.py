@@ -98,6 +98,13 @@ class Window(QMainWindow):
         self.t_input = QLineEdit()
         self.main_layout.addWidget(self.t_input)
 
+        # 输入降维后的维度
+        self.d_label = QLabel("请输入降维后的维度d:")
+        self.main_layout.addWidget(self.d_label)
+        self.d_input = QLineEdit()
+        self.main_layout.addWidget(self.d_input)
+        self.d_input.setText("35")  # 默认值为35
+
         self.classifier_label = QLabel("请选择分类器:")
         self.main_layout.addWidget(self.classifier_label)
         self.classifier_combo = QComboBox()
@@ -133,7 +140,7 @@ class Window(QMainWindow):
             self.mnist_split_combo.setVisible(False)
             self.target_size_combo.setCurrentText("35%")  # 设置初始值为x%,即长宽均为原来的x%且取整
             self.t_input.setText("100000")  # 默认值为100000
-            self.p_input.setText("70")  # 默认值为100
+            self.p_input.setText("40")  # 默认值为100
         elif "MNIST_ORG" in self.default_dataset_path:
             self.dataset_path = self.default_dataset_path
             self.recommended_k_parameters()
@@ -186,7 +193,7 @@ class Window(QMainWindow):
                 self.mnist_split_combo.setVisible(False)
                 self.target_size_combo.setCurrentText("35%")  # 设置初始值为x%,即长宽均为原来的x%且取整
                 self.t_input.setText("100000")  # 默认值为100000
-                self.p_input.setText("70")  # 默认值为70
+                self.p_input.setText("40")  # 默认值为70
             elif "MNIST_ORG" in self.dataset_path:
                 self.train_test_split_label.setVisible(False)
                 self.train_test_split_combo.setVisible(False)
@@ -248,8 +255,8 @@ class Window(QMainWindow):
         try:
             # 获取用户输入的参数值
             p = int(self.p_input.text())
-            #d = int(self.d_input.text())
-            k = int(self.k_input.text())
+            d = int(self.d_input.text())
+            #k = int(self.k_input.text())
             t = int(self.t_input.text())
             method = self.method_combo.currentText()
             lpp_method = self.lpp_method_combo.currentText()
@@ -290,7 +297,7 @@ class Window(QMainWindow):
             self.execute_button.setText("程序执行中，请勿操作！")
             QApplication.processEvents()  # 强制刷新界面，立即显示按钮文本变更
             accuracies = []  # 用于存储1到p-1维的运行的准确率
-            for d in range(1, p):  # 从1到p-1
+            for k in range(1, 11):  # 从1到10
                 rates = []  # 用于存储runs次运行的准确率
                 for _ in range(runs):
                     if "ORL" in self.dataset_path or "UMIST" in self.dataset_path or "yalefaces" in self.dataset_path:
@@ -422,9 +429,9 @@ class Window(QMainWindow):
                     rates.append(rate)  # 记录准确率
                 average_accuracy = np.mean(rates)  # 计算当前d的平均准确率
                 accuracies.append(average_accuracy)
-                print(f"维度d={d}的平均准确率: {average_accuracy}")
+                print(f"最近邻数量k={k}的平均准确率: {average_accuracy}")
             #保存d和对应的平均准确率到csv文件中，第一列数据为d，第二列数据为平均准确率，文件名为method+p.csv
-            np.savetxt(f"{method}{p}{lpp_method}.csv", np.array([range(1, p), accuracies]).T, delimiter=",")
+            np.savetxt(f"{method}{k}{lpp_method}.csv", np.array([range(1, 11), accuracies]).T, delimiter=",")
                 # 计算标准差
                 #std_deviation = np.std(accuracies)
 
