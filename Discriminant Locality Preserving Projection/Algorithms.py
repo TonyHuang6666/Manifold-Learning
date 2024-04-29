@@ -299,7 +299,7 @@ def read_ORL_UMIST_yalefaces_images(dataset_dir, target_size=None):
     return np.array(data), np.array(labels).reshape(-1, 1), faceshape  # 返回图像数据和标签
 
 """
-# 训练集和测试集划分(随机划分)
+# 训练集和测试集划分(随机划分, 貌似不是每一类数量都相等)
 def train_test_split(data, labels, train_test_split_ratio):
     num_samples = data.shape[0]  # 总样本数
     train_samples = int(num_samples * train_test_split_ratio)  # 训练集样本数
@@ -318,6 +318,28 @@ def train_test_split(data, labels, train_test_split_ratio):
     
     return train_data, train_labels, test_data, test_labels
 """
+
+from sklearn.model_selection import train_test_split
+def split(data, labels, train_test_split_ratio, state):
+    num_samples = data.shape[0]  # 总样本数
+    num_classes = len(np.unique(labels))  # 类别数
+    train_samples_per_class = int(train_test_split_ratio * num_samples / num_classes)  # 每个类别的训练样本数
+    
+    train_indices = []
+    test_indices = []
+    for i in range(1, num_classes + 1):  # 对每个类别
+        class_indices = np.where(labels == i)[0]  # 获取当前类别的索引
+        # 将当前类别的样本划分为训练集和测试集
+        train_idx, test_idx = train_test_split(class_indices, train_size=train_samples_per_class, test_size=None, random_state =state)
+        train_indices.extend(train_idx)
+        test_indices.extend(test_idx)
+    
+    train_data = data[train_indices]
+    train_labels = labels[train_indices]
+    test_data = data[test_indices]
+    test_labels = labels[test_indices]
+    
+    return train_data, train_labels, test_data, test_labels
 
 # 训练集和测试集划分(按顺序划分)
 def train_test_split(data, labels, train_test_split_ratio):
