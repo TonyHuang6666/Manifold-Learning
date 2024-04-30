@@ -321,19 +321,16 @@ def train_test_split(data, labels, train_test_split_ratio):
 
 from sklearn.model_selection import train_test_split
 def split(data, labels, train_test_split_ratio, state):
-    num_samples = data.shape[0]  # 总样本数
-    num_classes = len(np.unique(labels))  # 类别数
-    train_samples_per_class = int(train_test_split_ratio * num_samples / num_classes)  # 每个类别的训练样本数
-    
+    classes = np.unique(labels)
     train_indices = []
     test_indices = []
-    for i in range(1, num_classes + 1):  # 对每个类别
-        class_indices = np.where(labels == i)[0]  # 获取当前类别的索引
-        # 将当前类别的样本划分为训练集和测试集
-        train_idx, test_idx = train_test_split(class_indices, train_size=train_samples_per_class, test_size=None, random_state =state)
+    for i in range(min(classes), max(classes) + 1):  # Iterate over each class
+        class_indices = np.where(labels == i)[0]  # Get indices for the current class
+        # Split the samples of the current class into training and testing sets
+        train_idx, test_idx = train_test_split(class_indices, test_size=(1 - train_test_split_ratio), train_size=train_test_split_ratio, random_state=state)
         train_indices.extend(train_idx)
         test_indices.extend(test_idx)
-    
+
     train_data = data[train_indices]
     train_labels = labels[train_indices]
     test_data = data[test_indices]
@@ -342,7 +339,7 @@ def split(data, labels, train_test_split_ratio, state):
     return train_data, train_labels, test_data, test_labels
 
 # 训练集和测试集划分(按顺序划分)
-def train_test_split(data, labels, train_test_split_ratio):
+def my_train_test_split(data, labels, train_test_split_ratio):
     num_samples = data.shape[0]  # 总样本数
     num_classes = len(np.unique(labels))  # 类别数
     train_samples_per_class = int(train_test_split_ratio * num_samples / num_classes)  # 每个类别的训练样本数
