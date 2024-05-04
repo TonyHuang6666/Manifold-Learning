@@ -22,8 +22,8 @@ class Window(QMainWindow):
         # 数据集的选择与划分
         self.dataset_label = QLabel("请选择数据集文件夹:")
         self.main_layout.addWidget(self.dataset_label)
-        self.default_dataset_path = "C:\\Users\\Tony\\Documents\\Manifold-Learning\\Discriminant Locality Preserving Projection\\ORL"
-        #AMD self.default_dataset_path = "D:\\Manifold-Learning\\Discriminant Locality Preserving Projection\\ORL"
+        #self.default_dataset_path = "C:\\Users\\Tony\\Documents\\Manifold-Learning\\Discriminant Locality Preserving Projection\\ORL"
+        self.default_dataset_path = "D:\\Manifold-Learning\\Discriminant Locality Preserving Projection\\ORL"
         self.dataset_path_label = QLabel(f"数据集默认路径: {self.default_dataset_path}")  # 显示默认数据集文件夹的路径
         self.main_layout.addWidget(self.dataset_path_label)
         self.dataset_button = QPushButton("选择其他数据集")
