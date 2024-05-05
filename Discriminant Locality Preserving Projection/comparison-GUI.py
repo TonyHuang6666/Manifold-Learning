@@ -226,7 +226,8 @@ class Window(QMainWindow):
         if "ORL" in self.dataset_path or "yalefaces" in self.dataset_path:
             data, labels, imageshape = read_ORL_UMIST_yalefaces_images(self.dataset_path, target_size=None)
             train_test_split_ratio = float(self.train_test_split_combo.currentText())
-            train_data, train_labels, test_data, test_labels = train_test_split(data, labels, train_test_split_ratio=train_test_split_ratio)
+            #train_data, train_labels, test_data, test_labels = my_train_test_split(data, labels, train_test_split_ratio=train_test_split_ratio)
+            train_data, train_labels, test_data, test_labels = split(data, labels, train_test_split_ratio, 0)
         #如果读取的是MNIST数据集，即self.dataset_path中含有"MNIST"字符串
         elif "MNIST_ORG" in self.dataset_path:
             fraction = float(self.mnist_split_combo.currentText())
@@ -238,11 +239,13 @@ class Window(QMainWindow):
             data = digits.data
             target = digits.target
             train_test_split_ratio = float(self.train_test_split_combo.currentText())
-            train_data, train_labels, test_data, test_labels = train_test_split(data, target, train_test_split_ratio=train_test_split_ratio)
+            #train_data, train_labels, test_data, test_labels = my_train_test_split(data, target, train_test_split_ratio=train_test_split_ratio)
+            train_data, train_labels, test_data, test_labels = split(data, target, train_test_split_ratio, 0)
         elif "UMIST" in self.dataset_path:
             data, labels, imageshape = read_ORL_UMIST_yalefaces_images(self.dataset_path, target_size=(32,32))
             train_test_split_ratio = float(self.train_test_split_combo.currentText())
-            train_data, train_labels, test_data, test_labels = train_test_split(data, labels, train_test_split_ratio=train_test_split_ratio)
+            #train_data, train_labels, test_data, test_labels = my_train_test_split(data, labels, train_test_split_ratio=train_test_split_ratio)
+            train_data, train_labels, test_data, test_labels = split(data, labels, train_test_split_ratio, 0)
         else:
             raise ValueError(f"未知数据集: {selected_dataset}")
         num_classes = len(np.unique(train_labels))  # 类别数量
@@ -255,9 +258,9 @@ class Window(QMainWindow):
         try:
             # 获取用户输入的参数值
             p = int(self.p_input.text())
-            d = int(self.d_input.text())
+            #d = int(self.d_input.text())
             k = int(self.k_input.text())
-            #t = int(self.t_input.text())
+            t = int(self.t_input.text())
             method = self.method_combo.currentText()
             lpp_method = self.lpp_method_combo.currentText()
             train_test_split_ratio = float(self.train_test_split_combo.currentText())
@@ -296,10 +299,13 @@ class Window(QMainWindow):
             # 更改按钮文本为“程序执行中”
             self.execute_button.setText("程序执行中，请勿操作！")
             QApplication.processEvents()  # 强制刷新界面，立即显示按钮文本变更
+            random_sums = [98, 73, 76, 39, 99, 51, 48, 18, 27, 78, 74, 19, 50, 89, 67, 64, 34, 58, 8, 2, 75, 13, 70, 25, 9, 72, 6, 30, 14, 45, 11, 63, 59, 46, 91, 71, 42, 24, 83, 28, 38, 53, 41, 7, 40, 82, 36, 84, 37, 85, 55, 56, 100, 80, 44, 92, 43, 10, 97, 47, 35, 29, 26, 4, 3, 17, 88, 61, 21, 66, 65, 62, 57, 54, 49, 31, 81, 15, 16, 1, 32, 5, 79, 22, 95, 87, 68, 96, 93, 86, 60, 94, 52, 69, 23, 20, 77, 90, 33, 12]
             accuracies = []  # 用于存储1到p-1维的运行的准确率
-            for t in range(5000, 265000, 25000):
+            std_deviations = []  # 用于存储1到p-1维的运行的标准差
+            for d in range(1, p):  # 从1到p-1
                 rates = []  # 用于存储runs次运行的准确率
-                for _ in range(runs):
+                deviations = []  # 用于存储runs次运行的标准差 
+                for i in range(runs):
                     if "ORL" in self.dataset_path or "UMIST" in self.dataset_path or "yalefaces" in self.dataset_path:
                         images, labels, image_shape = read_ORL_UMIST_yalefaces_images(self.dataset_path, target_size=target_size)
                         if method == "PCA":
@@ -308,7 +314,8 @@ class Window(QMainWindow):
                             data = images
                         else:
                             data = PCA(images.T, p)
-                        train_data, train_labels, test_data, test_labels = train_test_split(data, labels, train_test_split_ratio=train_test_split_ratio)
+                        #train_data, train_labels, test_data, test_labels = my_train_test_split(data, labels, train_test_split_ratio=train_test_split_ratio)
+                        train_data, train_labels, test_data, test_labels = split(data, labels, train_test_split_ratio, random_sums[i])
                     
                     elif "MNIST_ORG" in self.dataset_path:
                         train_data, train_labels, test_data, test_labels, image_shape = read_mnist_dataset(self.dataset_path, fraction=fraction)
@@ -320,7 +327,8 @@ class Window(QMainWindow):
                             data = images
                         else:
                             data = PCA(images.T, p)
-                        train_data, train_labels, test_data, test_labels = train_test_split(data, labels, train_test_split_ratio=train_test_split_ratio)
+                        #train_data, train_labels, test_data, test_labels = my_train_test_split(data, labels, train_test_split_ratio=train_test_split_ratio)
+                        train_data, train_labels, test_data, test_labels = split(data, labels, train_test_split_ratio, random_sums[i])
             
                     rate = 0.0  # 初始化识别率
                     if method == "DLPP":
@@ -329,7 +337,7 @@ class Window(QMainWindow):
                         weight_matrix = eigenvectors.T @ train_data.T
                         test_data = eigenvectors.T @ test_data.T
                         # 将最后一次运行的信息显示在文本编辑框中
-                        if _ == runs - 1:
+                        if i == runs - 1:
                             self.info_textedit.clear()
                             self.show_info("读取的图像形状:", image_shape)
                             self.show_info("训练数据集形状:", train_data.shape)
@@ -360,7 +368,7 @@ class Window(QMainWindow):
                         weight_matrix = eigenvectors.T @ train_data.T
                         test_data = eigenvectors.T @ test_data.T
                         # 将最后一次运行的信息显示在文本编辑框中
-                        if _ == runs - 1:
+                        if i == runs - 1:
                             # 将信息显示在文本编辑框中
                             self.info_textedit.clear()
                             self.show_info("读取的图像形状:", image_shape)
@@ -385,7 +393,7 @@ class Window(QMainWindow):
                         # 调用 MLDA 函数并接收返回的中间变量信息
                         eigenimages, overall_mean, classes_means, Z, Sb, Sw, W_value = MLDA(train_data, train_labels, image_shape, d)
                         # 将最后一次运行的信息显示在文本编辑框中
-                        if _ == runs - 1:
+                        if i == runs - 1:
                             # 将信息显示在文本编辑框中
                             self.info_textedit.clear()
                             self.show_info("读取的图像形状:", image_shape)
@@ -410,7 +418,7 @@ class Window(QMainWindow):
 
                     elif method == "PCA":
                         # 将最后一次运行的信息显示在文本编辑框中
-                        if _ == runs - 1:
+                        if i == runs - 1:
                             # 将信息显示在文本编辑框中
                             self.info_textedit.clear()
                             self.show_info("读取的图像形状:", image_shape)
@@ -425,13 +433,14 @@ class Window(QMainWindow):
                             else:
                                 wrong_times += 1
                         rate = right_times / test_data.shape[0]
-
                     rates.append(rate)  # 记录准确率
                 average_accuracy = np.mean(rates)  # 计算当前d的平均准确率
+                deviations.append(np.std(rates))  # 记录标准差
                 accuracies.append(average_accuracy)
-                print(f"热核参数t={t}的平均准确率: {average_accuracy}")
+                std_deviations.append(np.std(rates))
+                print(f"维度d={d}的平均准确率: {average_accuracy}, 标准差: {np.std(rates)}")
             #保存d和对应的平均准确率到csv文件中，第一列数据为d，第二列数据为平均准确率，文件名为method+p.csv
-            np.savetxt(f"{method}{t}{lpp_method}.csv", np.array([range(5000, 265000, 25000), accuracies]).T, delimiter=",")
+            np.savetxt(f"{method}{d}{lpp_method}.csv", np.array([range(1, p), accuracies, std_deviations]).T, delimiter=",", fmt="%.4f")
                 # 计算标准差
                 #std_deviation = np.std(accuracies)
 
