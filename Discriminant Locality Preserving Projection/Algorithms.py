@@ -286,6 +286,7 @@ def read_ORL_UMIST_yalefaces_images(dataset_dir, target_size=None):
                     if target_size is not None:
                         img = resize(img, target_size, interpolation=INTER_AREA)
                     remove(pgm_file_path)  # 删除临时保存的.pgm文件
+                    
             else:
                 img = imread(file_path, IMREAD_GRAYSCALE)  # 读取灰度图像
                 # 如果指定了目标尺寸，则缩放图像
