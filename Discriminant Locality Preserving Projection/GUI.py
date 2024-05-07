@@ -22,8 +22,8 @@ class Window(QMainWindow):
         # 数据集的选择与划分
         self.dataset_label = QLabel("请选择数据集文件夹:")
         self.main_layout.addWidget(self.dataset_label)
-        #self.default_dataset_path = "C:\\Users\\Tony\\Documents\\Manifold-Learning\\Discriminant Locality Preserving Projection\\ORL"
-        self.default_dataset_path = "D:\\Manifold-Learning\\Discriminant Locality Preserving Projection\\ORL"
+        self.default_dataset_path = "C:\\Users\\Tony\\Documents\\Manifold-Learning\\Discriminant Locality Preserving Projection\\ORL"
+        #self.default_dataset_path = "D:\\Manifold-Learning\\Discriminant Locality Preserving Projection\\ORL"
         self.dataset_path_label = QLabel(f"数据集默认路径: {self.default_dataset_path}")  # 显示默认数据集文件夹的路径
         self.main_layout.addWidget(self.dataset_path_label)
         self.dataset_button = QPushButton("选择其他数据集")
@@ -238,8 +238,8 @@ class Window(QMainWindow):
         if "ORL" in self.dataset_path or "yalefaces" in self.dataset_path:
             data, labels, imageshape = read_ORL_UMIST_yalefaces_images(self.dataset_path, target_size=None)
             train_test_split_ratio = float(self.train_test_split_combo.currentText())
-            #train_data, train_labels, test_data, test_labels = my_train_test_split(data, labels, train_test_split_ratio=train_test_split_ratio)
-            train_data, train_labels, test_data, test_labels = split(data, labels, train_test_split_ratio, 0)
+            train_data, train_labels, test_data, test_labels = my_train_test_split(data, labels, train_test_split_ratio=train_test_split_ratio)
+            #train_data, train_labels, test_data, test_labels = split(data, labels, train_test_split_ratio, 0)
         #如果读取的是MNIST数据集，即self.dataset_path中含有"MNIST"字符串
         elif "MNIST_ORG" in self.dataset_path:
             fraction = float(self.mnist_split_combo.currentText())
@@ -251,13 +251,13 @@ class Window(QMainWindow):
             data = digits.data
             target = digits.target
             train_test_split_ratio = float(self.train_test_split_combo.currentText())
-            #train_data, train_labels, test_data, test_labels = my_train_test_split(data, target, train_test_split_ratio=train_test_split_ratio)
-            train_data, train_labels, test_data, test_labels = split(data, target, train_test_split_ratio, 0)
+            train_data, train_labels, test_data, test_labels = my_train_test_split(data, target, train_test_split_ratio=train_test_split_ratio)
+            #train_data, train_labels, test_data, test_labels = split(data, target, train_test_split_ratio, 0)
         elif "UMIST" in self.dataset_path:
             data, labels, imageshape = read_ORL_UMIST_yalefaces_images(self.dataset_path, target_size=(32,32))
             train_test_split_ratio = float(self.train_test_split_combo.currentText())
-            #train_data, train_labels, test_data, test_labels = my_train_test_split(data, labels, train_test_split_ratio=train_test_split_ratio)
-            train_data, train_labels, test_data, test_labels = split(data, labels, train_test_split_ratio, 0)
+            train_data, train_labels, test_data, test_labels = my_train_test_split(data, labels, train_test_split_ratio=train_test_split_ratio)
+            #train_data, train_labels, test_data, test_labels = split(data, labels, train_test_split_ratio, 0)
         else:
             raise ValueError(f"未知数据集: {selected_dataset}")
         num_classes = len(np.unique(train_labels))  # 类别数量
@@ -322,8 +322,8 @@ class Window(QMainWindow):
                         data = images
                     else:
                         data = PCA(images.T, p)
-                    #train_data, train_labels, test_data, test_labels = my_train_test_split(data, labels, train_test_split_ratio=train_test_split_ratio)
-                    train_data, train_labels, test_data, test_labels = split(data, labels, train_test_split_ratio, random_sums[i])
+                    train_data, train_labels, test_data, test_labels = my_train_test_split(data, labels, train_test_split_ratio=train_test_split_ratio)
+                    #train_data, train_labels, test_data, test_labels = split(data, labels, train_test_split_ratio, random_sums[i])
 
                 
                 elif "MNIST_ORG" in self.dataset_path:
@@ -336,8 +336,8 @@ class Window(QMainWindow):
                         data = images
                     else:
                         data = PCA(images.T, p)
-                    #train_data, train_labels, test_data, test_labels = my_train_test_split(data, labels, train_test_split_ratio=train_test_split_ratio)
-                    train_data, train_labels, test_data, test_labels = split(data, labels, train_test_split_ratio, random_sums[i])
+                    train_data, train_labels, test_data, test_labels = my_train_test_split(data, labels, train_test_split_ratio=train_test_split_ratio)
+                    #train_data, train_labels, test_data, test_labels = split(data, labels, train_test_split_ratio, random_sums[i])
         
                 rate = 0.0  # 初始化识别率
                 if method == "DLPP":
