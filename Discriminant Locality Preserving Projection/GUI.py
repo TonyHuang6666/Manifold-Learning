@@ -172,6 +172,15 @@ class Window(QMainWindow):
             self.t_input.setText("100000")
             self.p_input.setText("30")
             self.d_input.setText("20")
+        elif "FERET_Face" in self.default_dataset_path:
+            self.dataset_path = self.default_dataset_path
+            self.recommended_k_parameters()
+            self.mnist_split_label.setVisible(False)
+            self.mnist_split_combo.setVisible(False)
+            self.target_size_combo.setCurrentText("35%")  # 设置初始值为x%,即长宽均为原来的x%且取整
+            self.t_input.setText("100000")  # 默认值为100000
+            self.p_input.setText("70")  # 默认值为100
+            self.d_input.setText("50")  # 默认值为70
 
 
     def center_on_screen(self):
@@ -224,6 +233,17 @@ class Window(QMainWindow):
                 self.t_input.setText("100000")  # 默认值为100000
                 self.p_input.setText("30")  # 默认值为30
                 self.d_input.setText("20")  # 默认值为20
+            elif "FERET_Face" in self.dataset_path:
+                self.train_test_split_label.setVisible(True)
+                self.train_test_split_combo.setVisible(True)
+                self.target_size_label.setVisible(True)
+                self.target_size_combo.setVisible(True)
+                self.mnist_split_label.setVisible(False)
+                self.mnist_split_combo.setVisible(False)
+                self.target_size_combo.setCurrentText("35%")  # 设置初始值为x%,即长宽均为原来的x%且取整
+                self.t_input.setText("100000")  # 默认值为100000
+                self.p_input.setText("70")  # 默认值为70
+                self.d_input.setText("50")  # 默认值为50
             self.recommended_k_parameters()
         except Exception as e:
             # 弹出错误窗口显示报错原因
@@ -255,6 +275,11 @@ class Window(QMainWindow):
             #train_data, train_labels, test_data, test_labels = split(data, target, train_test_split_ratio, 0)
         elif "UMIST" in self.dataset_path:
             data, labels, imageshape = read_ORL_UMIST_yalefaces_images(self.dataset_path, target_size=(32,32))
+            train_test_split_ratio = float(self.train_test_split_combo.currentText())
+            train_data, train_labels, test_data, test_labels = my_train_test_split(data, labels, train_test_split_ratio=train_test_split_ratio)
+            #train_data, train_labels, test_data, test_labels = split(data, labels, train_test_split_ratio, 0)
+        elif "FERET_Face" in self.dataset_path:
+            data, labels, imageshape = read_ORL_UMIST_yalefaces_images(self.dataset_path, target_size=None)
             train_test_split_ratio = float(self.train_test_split_combo.currentText())
             train_data, train_labels, test_data, test_labels = my_train_test_split(data, labels, train_test_split_ratio=train_test_split_ratio)
             #train_data, train_labels, test_data, test_labels = split(data, labels, train_test_split_ratio, 0)
@@ -298,6 +323,9 @@ class Window(QMainWindow):
             elif "UMIST" in self.dataset_path:
                 image_shape_temp = (32, 32)
                 image_shape = (32, 32)
+            elif "FERET_Face" in self.dataset_path:
+                data_temp, labels_temp, image_shape_temp = read_ORL_UMIST_yalefaces_images(self.dataset_path, target_size=None)
+                train_test_split_ratio = float(self.train_test_split_combo.currentText())
 
             # 按选择缩放图像
             if target_size_str == "100%":
@@ -314,7 +342,7 @@ class Window(QMainWindow):
             QApplication.processEvents()  # 强制刷新界面，立即显示按钮文本变更
             random_sums = [98, 73, 76, 39, 99, 51, 48, 18, 27, 78, 74, 19, 50, 89, 67, 64, 34, 58, 8, 2, 75, 13, 70, 25, 9, 72, 6, 30, 14, 45, 11, 63, 59, 46, 91, 71, 42, 24, 83, 28, 38, 53, 41, 7, 40, 82, 36, 84, 37, 85, 55, 56, 100, 80, 44, 92, 43, 10, 97, 47, 35, 29, 26, 4, 3, 17, 88, 61, 21, 66, 65, 62, 57, 54, 49, 31, 81, 15, 16, 1, 32, 5, 79, 22, 95, 87, 68, 96, 93, 86, 60, 94, 52, 69, 23, 20, 77, 90, 33, 12]
             for i in range(runs):
-                if "ORL" in self.dataset_path or "UMIST" in self.dataset_path or "yalefaces" in self.dataset_path:
+                if "ORL" in self.dataset_path or "UMIST" in self.dataset_path or "yalefaces" or "FERET_Face" in self.dataset_path:
                     images, labels, image_shape = read_ORL_UMIST_yalefaces_images(self.dataset_path, target_size=target_size)
                     if method == "PCA":
                         data = PCA(images.T, d)

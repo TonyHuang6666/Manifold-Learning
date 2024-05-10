@@ -258,8 +258,8 @@ class Window(QMainWindow):
         try:
             # 获取用户输入的参数值
             p = int(self.p_input.text())
-            #d = int(self.d_input.text())
-            k = int(self.k_input.text())
+            d = int(self.d_input.text())
+            #k = int(self.k_input.text())
             t = int(self.t_input.text())
             method = self.method_combo.currentText()
             lpp_method = self.lpp_method_combo.currentText()
@@ -302,7 +302,7 @@ class Window(QMainWindow):
             random_sums = [98, 73, 76, 39, 99, 51, 48, 18, 27, 78, 74, 19, 50, 89, 67, 64, 34, 58, 8, 2, 75, 13, 70, 25, 9, 72, 6, 30, 14, 45, 11, 63, 59, 46, 91, 71, 42, 24, 83, 28, 38, 53, 41, 7, 40, 82, 36, 84, 37, 85, 55, 56, 100, 80, 44, 92, 43, 10, 97, 47, 35, 29, 26, 4, 3, 17, 88, 61, 21, 66, 65, 62, 57, 54, 49, 31, 81, 15, 16, 1, 32, 5, 79, 22, 95, 87, 68, 96, 93, 86, 60, 94, 52, 69, 23, 20, 77, 90, 33, 12]
             accuracies = []  # 用于存储1到p-1维的运行的准确率
             std_deviations = []  # 用于存储1到p-1维的运行的标准差
-            for d in range(1, p):  # 从1到p-1
+            for k in range(1, 11):  # 从1到10
                 rates = []  # 用于存储runs次运行的准确率
                 deviations = []  # 用于存储runs次运行的标准差 
                 for i in range(runs):
@@ -438,9 +438,9 @@ class Window(QMainWindow):
                 deviations.append(np.std(rates))  # 记录标准差
                 accuracies.append(average_accuracy)
                 std_deviations.append(np.std(rates))
-                print(f"维度d={d}的平均准确率: {average_accuracy}, 标准差: {np.std(rates)}")
+                print(f"最近邻数k={k}的平均准确率: {average_accuracy}, 标准差: {np.std(rates)}")
             #保存d和对应的平均准确率到csv文件中，第一列数据为d，第二列数据为平均准确率，文件名为method+p.csv
-            np.savetxt(f"{method}{d}{lpp_method}.csv", np.array([range(1, p), accuracies, std_deviations]).T, delimiter=",", fmt="%.4f")
+            np.savetxt(f"{method}{k}{lpp_method}.csv", np.array([range(1, 11), accuracies, std_deviations]).T, delimiter=",", fmt="%.4f", header="k,accuracy,std_deviation", comments="")
                 # 计算标准差
                 #std_deviation = np.std(accuracies)
 

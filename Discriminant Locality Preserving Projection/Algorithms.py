@@ -286,7 +286,20 @@ def read_ORL_UMIST_yalefaces_images(dataset_dir, target_size=None):
                     if target_size is not None:
                         img = resize(img, target_size, interpolation=INTER_AREA)
                     remove(pgm_file_path)  # 删除临时保存的.pgm文件
-                    
+            elif file_name.endswith('.tif'):  # 如果文件格式为.tif
+                # 使用PIL库打开.tif文件
+                with Image.open(file_path) as img:
+                    # 转换为灰度图像
+                    img = img.convert('L')
+                    # 保存为.pgm格式
+                    pgm_file_path = file_path.replace('.tif', '.pgm')
+                    img.save(pgm_file_path)
+                    # 读取.pgm文件并继续后续处理
+                    img = imread(pgm_file_path, IMREAD_GRAYSCALE)
+                    # 如果指定了目标尺寸，则缩放图像
+                    if target_size is not None:
+                        img = resize(img, target_size, interpolation=INTER_AREA)
+                    remove(pgm_file_path)        
             else:
                 img = imread(file_path, IMREAD_GRAYSCALE)  # 读取灰度图像
                 # 如果指定了目标尺寸，则缩放图像
