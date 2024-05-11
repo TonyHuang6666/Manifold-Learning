@@ -163,6 +163,14 @@ class Window(QMainWindow):
             self.train_test_split_combo.setVisible(True)
             self.t_input.setText("100000")
             self.p_input.setText("30")
+        elif "FERET_Face" in self.default_dataset_path:
+            self.dataset_path = self.default_dataset_path
+            self.recommended_k_parameters()
+            self.mnist_split_label.setVisible(False)
+            self.mnist_split_combo.setVisible(False)
+            self.target_size_combo.setCurrentText("35%")  # 设置初始值为x%,即长宽均为原来的x%且取整
+            self.t_input.setText("100000")  # 默认值为100000
+            self.p_input.setText("40")  # 默认值为100
 
 
     def center_on_screen(self):
@@ -184,7 +192,7 @@ class Window(QMainWindow):
             self.dataset_path = QFileDialog.getExistingDirectory(self, "选择数据集文件夹", options=options)
             if self.dataset_path:
                 self.dataset_path_label.setText(f"数据集路径: {self.dataset_path}")
-            if "ORL" in self.dataset_path or "yalefaces" in self.dataset_path:
+            if "ORL" in self.dataset_path or "yalefaces" or "UMIST" in self.dataset_path:
                 self.train_test_split_label.setVisible(True)
                 self.train_test_split_combo.setVisible(True)
                 self.target_size_label.setVisible(True)
@@ -212,6 +220,16 @@ class Window(QMainWindow):
                 self.mnist_split_combo.setVisible(False)
                 self.t_input.setText("100000")  # 默认值为100000
                 self.p_input.setText("30")  # 默认值为30
+            elif "FERET_Face" in self.dataset_path:
+                self.train_test_split_label.setVisible(True)
+                self.train_test_split_combo.setVisible(True)
+                self.target_size_label.setVisible(True)
+                self.target_size_combo.setVisible(True)
+                self.mnist_split_label.setVisible(False)
+                self.mnist_split_combo.setVisible(False)
+                self.target_size_combo.setCurrentText("35%")  # 设置初始值为x%,即长宽均为原来的x%且取整
+                self.t_input.setText("100000")  # 默认值为100000
+                self.p_input.setText("40")  # 默认值为70
             self.recommended_k_parameters()
         except Exception as e:
             # 弹出错误窗口显示报错原因
@@ -246,6 +264,11 @@ class Window(QMainWindow):
             train_test_split_ratio = float(self.train_test_split_combo.currentText())
             #train_data, train_labels, test_data, test_labels = my_train_test_split(data, labels, train_test_split_ratio=train_test_split_ratio)
             train_data, train_labels, test_data, test_labels = split(data, labels, train_test_split_ratio, 0)
+        elif "FERET_Face" in self.dataset_path:
+            data, labels, imageshape = read_ORL_UMIST_yalefaces_images(self.dataset_path, target_size=None)
+            train_test_split_ratio = float(self.train_test_split_combo.currentText())
+            #train_data, train_labels, test_data, test_labels = my_train_test_split(data, labels, train_test_split_ratio=train_test_split_ratio)
+            train_data, train_labels, test_data, test_labels = split(data, labels, train_test_split_ratio, 0)
         else:
             raise ValueError(f"未知数据集: {selected_dataset}")
         num_classes = len(np.unique(train_labels))  # 类别数量
@@ -259,13 +282,13 @@ class Window(QMainWindow):
             # 获取用户输入的参数值
             p = int(self.p_input.text())
             d = int(self.d_input.text())
-            #k = int(self.k_input.text())
+            k = int(self.k_input.text())
             t = int(self.t_input.text())
             method = self.method_combo.currentText()
             lpp_method = self.lpp_method_combo.currentText()
             train_test_split_ratio = float(self.train_test_split_combo.currentText())
             target_size_str = self.target_size_combo.currentText()
-            classifier = self.classifier_combo.currentText()
+            #classifier = self.classifier_combo.currentText()
 
             #如果读取的是ORL数据集或者是UMIST数据集，即self.dataset_path中含有"ORL"字符串或者"UMIST"字符串
             if "ORL" in self.dataset_path or "yalefaces" in self.dataset_path:
@@ -286,6 +309,9 @@ class Window(QMainWindow):
             elif "UMIST" in self.dataset_path:
                 image_shape_temp = (32, 32)
                 image_shape = (32, 32)
+            elif "FERET_Face" in self.dataset_path:
+                data_temp, labels_temp, image_shape_temp = read_ORL_UMIST_yalefaces_images(self.dataset_path, target_size=None)
+                train_test_split_ratio = float(self.train_test_split_combo.currentText())
 
             # 按选择缩放图像
             if target_size_str == "100%":
@@ -293,7 +319,6 @@ class Window(QMainWindow):
             else:
                 percentage = int(target_size_str[:-1]) / 100.0
                 target_size = (int(image_shape_temp[0] * percentage), int(image_shape_temp[1] * percentage))  # 使用 image_shape 确定原始尺寸
-
             runs = int(self.runs_input.text())  # 获取运行次数
             start_time = time.time()  # 记录开始时间
             # 更改按钮文本为“程序执行中”
@@ -306,7 +331,7 @@ class Window(QMainWindow):
                 rates = []  # 用于存储runs次运行的准确率
                 deviations = []  # 用于存储runs次运行的标准差 
                 for i in range(runs):
-                    if "ORL" in self.dataset_path or "UMIST" in self.dataset_path or "yalefaces" in self.dataset_path:
+                    if "ORL" in self.dataset_path or "UMIST" in self.dataset_path or "yalefaces" or "FERET_Face" in self.dataset_path:
                         images, labels, image_shape = read_ORL_UMIST_yalefaces_images(self.dataset_path, target_size=target_size)
                         if method == "PCA":
                             data = PCA(images.T, d)
@@ -352,10 +377,10 @@ class Window(QMainWindow):
                         wrong_times = 0
                         right_times = 0
                         for i in range(test_data.shape[0]):
-                            if classifier == "K-Nearest Neighbor":
-                                flag = KNN_classifier(i, train_labels, test_labels, test_data[:,i], weight_matrix, k)
-                            else:
-                                flag = Nearest_classifier(i, train_labels, test_labels, test_data[:,i], weight_matrix)
+                            #if classifier == "K-Nearest Neighbor":
+                                #flag = KNN_classifier(i, train_labels, test_labels, test_data[:,i], weight_matrix, k)
+                            #else:
+                            flag = Nearest_classifier(i, train_labels, test_labels, test_data[:,i], weight_matrix)
                             if flag:
                                 right_times += 1
                             else:
@@ -379,10 +404,10 @@ class Window(QMainWindow):
                         wrong_times = 0
                         right_times = 0
                         for i in range(test_data.shape[0]):
-                            if classifier == "K-Nearest Neighbor":
-                                flag = KNN_classifier(i, train_labels, test_labels, test_data[:,i], weight_matrix, k)
-                            else:
-                                flag = Nearest_classifier(i, train_labels, test_labels, test_data[:,i], weight_matrix)
+                            #if classifier == "K-Nearest Neighbor":
+                                #flag = KNN_classifier(i, train_labels, test_labels, test_data[:,i], weight_matrix, k)
+                            #else:
+                            flag = Nearest_classifier(i, train_labels, test_labels, test_data[:,i], weight_matrix)
                             if flag:
                                 right_times += 1
                             else:
