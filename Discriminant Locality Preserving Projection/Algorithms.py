@@ -30,6 +30,7 @@ def compute_adaptive_neighbors(Data):
     n = Data.shape[1]  # 样本点的数量
     distances = np.sqrt(np.sum((Data.T[:, :, None] - Data.T[:, :, None].T) ** 2, axis=1)) 
     sorted_distances = np.sort(distances, axis=1)  # 对距离矩阵的每一行进行排序
+    np.savetxt('sorted_distances.csv', sorted_distances, delimiter=',')
     adaptive_neighbors = np.zeros((n, 1))
     # 对每行距离进行插值和求导
     for i in range(n):
