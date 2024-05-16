@@ -140,7 +140,7 @@ class Window(QMainWindow):
         #self.main_layout.addWidget(self.canvas)
 
         # 初始/默认数据集路径变量
-        if "ORL" in self.default_dataset_path or "yalefaces" in self.default_dataset_path:
+        if "ORL" in self.default_dataset_path or "yalefaces" or "CroppedYaleB" in self.default_dataset_path:
             self.dataset_path = self.default_dataset_path
             self.recommended_k_parameters()
             self.mnist_split_label.setVisible(False)
@@ -203,7 +203,7 @@ class Window(QMainWindow):
             self.dataset_path = QFileDialog.getExistingDirectory(self, "选择数据集文件夹", options=options)
             if self.dataset_path:
                 self.dataset_path_label.setText(f"数据集路径: {self.dataset_path}")
-            if "ORL" in self.dataset_path or "yalefaces" in self.dataset_path:
+            if "ORL" in self.dataset_path or "yalefaces"  or "CroppedYaleB" in self.dataset_path:
                 self.train_test_split_label.setVisible(True)
                 self.train_test_split_combo.setVisible(True)
                 self.target_size_label.setVisible(True)
@@ -256,11 +256,11 @@ class Window(QMainWindow):
         selected_dataset = self.dataset_path
 
         #如果读取的是ORL数据集或者是UMIST数据集，即self.dataset_path中含有"ORL"字符串或者"UMIST"字符串
-        if "ORL" in self.dataset_path or "yalefaces" in self.dataset_path:
+        if "ORL" in self.dataset_path or "yalefaces"  or "CroppedYaleB" in self.dataset_path:
             data, labels, imageshape = read_ORL_UMIST_yalefaces_images(self.dataset_path, target_size=None)
             train_test_split_ratio = float(self.train_test_split_combo.currentText())
-            #train_data, train_labels, test_data, test_labels = my_train_test_split(data, labels, train_test_split_ratio=train_test_split_ratio)
-            train_data, train_labels, test_data, test_labels = split(data, labels, train_test_split_ratio, 0)
+            train_data, train_labels, test_data, test_labels = my_train_test_split(data, labels, train_test_split_ratio=train_test_split_ratio)
+            #train_data, train_labels, test_data, test_labels = split(data, labels, train_test_split_ratio, 0)
         #如果读取的是MNIST数据集，即self.dataset_path中含有"MNIST"字符串
         elif "MNIST_ORG" in self.dataset_path:
             fraction = float(self.mnist_split_combo.currentText())
@@ -306,7 +306,7 @@ class Window(QMainWindow):
             #classifier = self.classifier_combo.currentText()
 
             #如果读取的是ORL数据集或者是UMIST数据集，即self.dataset_path中含有"ORL"字符串或者"UMIST"字符串
-            if "ORL" in self.dataset_path or "yalefaces" in self.dataset_path:
+            if "ORL" in self.dataset_path or "yalefaces"  or "CroppedYaleB" in self.dataset_path:
                 data_temp, labels_temp, image_shape_temp = read_ORL_UMIST_yalefaces_images(self.dataset_path, target_size=None)
                 train_test_split_ratio = float(self.train_test_split_combo.currentText())
             #如果读取的是MNIST数据集，即self.dataset_path中含有"MNIST"字符串
