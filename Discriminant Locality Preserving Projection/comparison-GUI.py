@@ -11,7 +11,7 @@ class Window(QMainWindow):
     def __init__(self):
         super().__init__()
 
-        self.setWindowTitle("基于流形学习的模式识别程序")
+        self.setWindowTitle("基于流形学习的参数对比实验程序")
         self.setGeometry(0, 0, 600, 650)
         self.center_on_screen()
         self.central_widget = QWidget()
@@ -82,9 +82,9 @@ class Window(QMainWindow):
         self.main_layout.addWidget(self.lpp_method_label)
         self.lpp_method_combo = QComboBox()
         self.lpp_method_combo.addItem("KNN")
-        self.lpp_method_combo.addItem("Average-KNN-distances-based epsilon")
+        #self.lpp_method_combo.addItem("Average-KNN-distances-based epsilon")
         self.lpp_method_combo.addItem("KNN + Adaptive epsilon")
-        self.lpp_method_combo.addItem("Adaptive epsilon")
+        #self.lpp_method_combo.addItem("Adaptive epsilon")
         self.lpp_method_combo.setCurrentText("KNN")  # 设置初始值为当前选择
         self.lpp_method_combo.currentIndexChanged.connect(self.toggle_parameters_visibility)  # 连接方法选择框的信号与槽函数
         self.main_layout.addWidget(self.lpp_method_combo)
