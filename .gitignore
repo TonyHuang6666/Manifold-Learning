@@ -4,6 +4,7 @@ images/
 *.csv
 *.npy
 *.pyc
+*.pgm
 
 # Jupyter Notebook output
 *.ipynb_checkpoints/
