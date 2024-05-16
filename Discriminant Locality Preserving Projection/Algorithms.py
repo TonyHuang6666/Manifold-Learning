@@ -147,7 +147,48 @@ def LPP(Data, d, method, k, t):
     
 ###############################LPP算法函数######################################
 
+###############################FLPP算法函数#####################################
+def construct_weight_matrix_flpp(Data):
+    n = Data.shape[1]
+    m = Data.shape[0] 
+    Weight_matrix = np.zeros((n, n))
+    V = np.zeros((n,m))
+    dr = np.zeros((1,m))
+    vr = np.zeros((n,1))
+    distances = np.sqrt(np.sum((Data.T[:, :, None] - Data.T[:, :, None].T) ** 2, axis=1))
+    for j in range(m):
+        for i in range(n):
+            dr[0,j]=dr[0,j]+np.sum((1/distances[i,j])**2)
 
+    for i in range(n):
+        for j in range(m):
+            V[i,j]=((1/distances[i,j])**2 )/dr[0,j]
+
+    for i in range(n):
+        for j in range(m):
+            vr[i,0] =vr[i,0] +(1/(m-1))*np.sum(V[i,j])
+
+    for i in range(n):
+        for j in range(m):
+            if V[i,j] >= vr[i,0]:
+                Weight_matrix[i,j] = 0
+            else:
+                Weight_matrix[i,j] = 1
+    return Weight_matrix
+
+def FLPP(Data, d):
+    Data = Data.T
+    Weight_matrix = construct_weight_matrix_flpp(Data)
+    Degree_matrix = np.diag(np.sum(Weight_matrix, axis=1))
+    Laplacian_matrix = Degree_matrix - Weight_matrix
+    objective_value = np.dot(np.dot(Data, Laplacian_matrix), Data.T)  # 计算目标函数
+    # eigs用于稀疏矩阵，eigh用于稠密矩阵
+    eigenvalues, eigenvectors = eigs(objective_value, k=d+1)
+    sorted_indices = np.argsort(eigenvalues.real)
+    selected_indices = sorted_indices[1:d + 1]
+    selected_eigenvectors = eigenvectors.real[:, selected_indices]
+    return selected_eigenvectors
+###############################FLPP算法函数#####################################
 
 ###############################MLDA算法函数######################################
 

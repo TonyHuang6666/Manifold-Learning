@@ -63,6 +63,7 @@ class Window(QMainWindow):
         self.main_layout.addWidget(self.method_label)
         self.method_combo = QComboBox()
         self.method_combo.addItem("DLPP")
+        self.method_combo.addItem("FLPP")
         self.method_combo.addItem("LPP")
         self.method_combo.addItem("MLDA")
         self.method_combo.addItem("PCA")
@@ -425,6 +426,33 @@ class Window(QMainWindow):
                         else:
                             wrong_times += 1
                     rate = right_times / test_data.shape[0]
+                
+                elif method == "FLPP":
+                    # 调用 FLPP 函数并接收返回的中间变量信息
+                    eigenvectors = FLPP(train_data, d)
+                    weight_matrix = eigenvectors.T @ train_data.T
+                    test_data = eigenvectors.T @ test_data.T
+                    # 将最后一次运行的信息显示在文本编辑框中
+                    if i == runs - 1:
+                        # 将信息显示在文本编辑框中
+                        self.info_textedit.clear()
+                        self.show_info("读取的图像形状:", image_shape)
+                        self.show_info("训练数据集形状:", train_data.shape)
+                        self.show_info("特征图像形状:", eigenvectors.shape)
+                        self.show_info("权重矩阵形状:", weight_matrix.shape)
+                    # 识别率统计
+                    wrong_times = 0
+                    right_times = 0
+                    for i in range(test_data.shape[0]):
+                        #if classifier == "K-Nearest Neighbor":
+                            #flag = KNN_classifier(i, train_labels, test_labels, test_data[:,i], weight_matrix, k)
+                        #else:
+                        flag = Nearest_classifier(i, train_labels, test_labels, test_data[:,i], weight_matrix)
+                        if flag:
+                            right_times += 1
+                        else:
+                            wrong_times += 1
+                    rate = right_times / test_data.shape[0]
 
                 elif method == "MLDA":
                     # 调用 MLDA 函数并接收返回的中间变量信息
@@ -584,6 +612,19 @@ class Window(QMainWindow):
             self.lpp_method_combo.setVisible(False)
             #self.classifier_combo.setVisible(False)
             #self.classifier_combo.setCurrentText("Nearest Neighbor")
+        elif selected_method == "FLPP":
+            self.k_label.setVisible(False)
+            self.k_input.setVisible(False)
+            self.t_label.setVisible(False)
+            self.t_input.setVisible(False)
+            self.p_label.setVisible(True)
+            self.p_input.setVisible(True)
+            self.d_label.setVisible(True)
+            self.d_input.setVisible(True)
+            self.lpp_method_label.setVisible(False)
+            self.lpp_method_combo.setVisible(False)
+            #self.classifier_label.setVisible(False)
+            #self.classifier_combo.setVisible(False)
 
 if __name__ == "__main__":
     app = QApplication(argv)
