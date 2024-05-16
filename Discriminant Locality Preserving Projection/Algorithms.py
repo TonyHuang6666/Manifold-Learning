@@ -159,7 +159,7 @@ def construct_weight_matrix_flpp(Data):
     for j in range(m):
         for i in range(n):
             dr[0,j]=dr[0,j]+np.sum((1/distances[i,j])**2)
-
+            
     for i in range(n):
         for j in range(m):
             V[i,j]=((1/distances[i,j])**2 )/dr[0,j]

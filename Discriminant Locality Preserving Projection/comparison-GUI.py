@@ -22,7 +22,8 @@ class Window(QMainWindow):
         # 数据集的选择与划分
         self.dataset_label = QLabel("请选择数据集文件夹:")
         self.main_layout.addWidget(self.dataset_label)
-        self.default_dataset_path = "D:\Manifold-Learning\Discriminant Locality Preserving Projection\ORL"
+        #self.default_dataset_path = "C:\\Users\\Tony\\Documents\\Manifold-Learning\\Discriminant Locality Preserving Projection\\ORL"
+        self.default_dataset_path = "D:\\Manifold-Learning\\Discriminant Locality Preserving Projection\\ORL"
         self.dataset_path_label = QLabel(f"数据集默认路径: {self.default_dataset_path}")  # 显示默认数据集文件夹的路径
         self.main_layout.addWidget(self.dataset_path_label)
         self.dataset_button = QPushButton("选择其他数据集")
@@ -57,23 +58,24 @@ class Window(QMainWindow):
             self.target_size_combo.addItem(f"{percentage}%")
         self.main_layout.addWidget(self.target_size_combo)
 
-        # 输入PCA降维后的维度
-        self.p_label = QLabel("请输入通过PCA降噪后的维度p:")
-        self.main_layout.addWidget(self.p_label)
-        self.p_input = QLineEdit()
-        self.main_layout.addWidget(self.p_input)
-
         # 选择降维方法
         self.method_label = QLabel("请选择数据降维方法:")
         self.main_layout.addWidget(self.method_label)
         self.method_combo = QComboBox()
         self.method_combo.addItem("DLPP")
+        self.method_combo.addItem("FLPP")
         self.method_combo.addItem("LPP")
         self.method_combo.addItem("MLDA")
         self.method_combo.addItem("PCA")
         self.method_combo.setCurrentText("DLPP")  # 设置初始值为当前选择
         self.method_combo.currentIndexChanged.connect(self.toggle_parameters_visibility)  # 连接方法选择框的信号与槽函数
         self.main_layout.addWidget(self.method_combo)
+
+        # 输入PCA降维后的维度
+        self.p_label = QLabel("请输入通过PCA降噪后的维度p:")
+        self.main_layout.addWidget(self.p_label)
+        self.p_input = QLineEdit()
+        self.main_layout.addWidget(self.p_input)
 
         # 选择LPP方法
         self.lpp_method_label = QLabel("请选择邻域选择方法:")
@@ -103,14 +105,13 @@ class Window(QMainWindow):
         self.main_layout.addWidget(self.d_label)
         self.d_input = QLineEdit()
         self.main_layout.addWidget(self.d_input)
-        self.d_input.setText("35")  # 默认值为35
 
-        self.classifier_label = QLabel("请选择分类器:")
-        self.main_layout.addWidget(self.classifier_label)
-        self.classifier_combo = QComboBox()
-        self.classifier_combo.addItem("Nearest Neighbor")
-        self.classifier_combo.addItem("K-Nearest Neighbor")
-        self.main_layout.addWidget(self.classifier_combo)
+        #self.classifier_label = QLabel("请选择分类器:")
+        #self.main_layout.addWidget(self.classifier_label)
+        #self.classifier_combo = QComboBox()
+        #self.classifier_combo.addItem("Nearest Neighbor")
+        #self.classifier_combo.addItem("K-Nearest Neighbor")
+        #self.main_layout.addWidget(self.classifier_combo)
 
         # 输入运行次数
         self.runs_label = QLabel("请输入运行次数:")
@@ -125,53 +126,29 @@ class Window(QMainWindow):
         self.main_layout.addWidget(self.execute_button)
 
         # 信息显示框
-        self.info_label = QLabel("最后一次运行程序信息显示:")
+        self.info_label = QLabel("程序信息显示:")
         self.main_layout.addWidget(self.info_label)
 
         self.info_textedit = QTextEdit()  # 用于显示函数信息的文本编辑框
         self.info_textedit.setReadOnly(True)  # 设置为只读模式
         self.main_layout.addWidget(self.info_textedit)
 
-        # 初始/默认数据集路径变量
-        if "ORL" in self.default_dataset_path or "yalefaces" in self.default_dataset_path:
-            self.dataset_path = self.default_dataset_path
-            self.recommended_k_parameters()
-            self.mnist_split_label.setVisible(False)
-            self.mnist_split_combo.setVisible(False)
-            self.target_size_combo.setCurrentText("35%")  # 设置初始值为x%,即长宽均为原来的x%且取整
-            self.t_input.setText("100000")  # 默认值为100000
-            self.p_input.setText("40")  # 默认值为100
-        elif "MNIST_ORG" in self.default_dataset_path:
-            self.dataset_path = self.default_dataset_path
-            self.recommended_k_parameters()
-            self.train_test_split_label.setVisible(False)
-            self.train_test_split_combo.setVisible(False)
-            self.target_size_label.setVisible(False)
-            self.target_size_combo.setVisible(False)
-            self.mnist_split_label.setVisible(True)
-            self.mnist_split_combo.setVisible(True)
-            self.t_input.setText("1500")
-            self.p_input.setText("70")
-        elif "mini" in self.default_dataset_path:
-            self.dataset_path = self.default_dataset_path
-            self.recommended_k_parameters()
-            self.mnist_split_label.setVisible(False)
-            self.mnist_split_combo.setVisible(False)
-            self.target_size_label.setVisible(False)
-            self.target_size_combo.setVisible(False)
-            self.train_test_split_label.setVisible(True)
-            self.train_test_split_combo.setVisible(True)
-            self.t_input.setText("100000")
-            self.p_input.setText("30")
-        elif "FERET_Face" in self.default_dataset_path:
-            self.dataset_path = self.default_dataset_path
-            self.recommended_k_parameters()
-            self.mnist_split_label.setVisible(False)
-            self.mnist_split_combo.setVisible(False)
-            self.target_size_combo.setCurrentText("35%")  # 设置初始值为x%,即长宽均为原来的x%且取整
-            self.t_input.setText("100000")  # 默认值为100000
-            self.p_input.setText("40")  # 默认值为100
+        #self.eigenimages_label = QLabel("最后一次运行的特征图像显示:")
+        #self.main_layout.addWidget(self.eigenimages_label)
 
+        #self.canvas = FigureCanvas(plt.figure())
+        #self.main_layout.addWidget(self.canvas)
+
+        # 初始/默认数据集路径变量
+        if "ORL" in self.default_dataset_path or "yalefaces" or "CroppedYaleB" in self.default_dataset_path:
+            self.dataset_path = self.default_dataset_path
+            self.recommended_k_parameters()
+            self.mnist_split_label.setVisible(False)
+            self.mnist_split_combo.setVisible(False)
+            self.target_size_combo.setCurrentText("35%")  # 设置初始值为x%,即长宽均为原来的x%且取整
+            self.t_input.setText("100000")  # 默认值为100000
+            self.p_input.setText("70")  # 默认值为100
+            self.d_input.setText("50")  # 默认值为70
 
     def center_on_screen(self):
         # 获取屏幕尺寸和窗口尺寸
@@ -192,7 +169,7 @@ class Window(QMainWindow):
             self.dataset_path = QFileDialog.getExistingDirectory(self, "选择数据集文件夹", options=options)
             if self.dataset_path:
                 self.dataset_path_label.setText(f"数据集路径: {self.dataset_path}")
-            if "ORL" in self.dataset_path or "yalefaces" or "UMIST" in self.dataset_path:
+            if "ORL" in self.dataset_path in self.dataset_path:
                 self.train_test_split_label.setVisible(True)
                 self.train_test_split_combo.setVisible(True)
                 self.target_size_label.setVisible(True)
@@ -201,7 +178,8 @@ class Window(QMainWindow):
                 self.mnist_split_combo.setVisible(False)
                 self.target_size_combo.setCurrentText("35%")  # 设置初始值为x%,即长宽均为原来的x%且取整
                 self.t_input.setText("100000")  # 默认值为100000
-                self.p_input.setText("40")  # 默认值为70
+                self.p_input.setText("70")  # 默认值为70
+                self.d_input.setText("50")  # 默认值为50
             elif "MNIST_ORG" in self.dataset_path:
                 self.train_test_split_label.setVisible(False)
                 self.train_test_split_combo.setVisible(False)
@@ -211,6 +189,7 @@ class Window(QMainWindow):
                 self.mnist_split_combo.setVisible(True)
                 self.t_input.setText("1500")  # 默认值为1500
                 self.p_input.setText("70")  # 默认值为70
+                self.d_input.setText("50")  # 默认值为50
             elif "mini" in self.dataset_path:
                 self.train_test_split_label.setVisible(True)
                 self.train_test_split_combo.setVisible(True)
@@ -220,6 +199,7 @@ class Window(QMainWindow):
                 self.mnist_split_combo.setVisible(False)
                 self.t_input.setText("100000")  # 默认值为100000
                 self.p_input.setText("30")  # 默认值为30
+                self.d_input.setText("20")  # 默认值为20
             elif "FERET_Face" in self.dataset_path:
                 self.train_test_split_label.setVisible(True)
                 self.train_test_split_combo.setVisible(True)
@@ -229,7 +209,32 @@ class Window(QMainWindow):
                 self.mnist_split_combo.setVisible(False)
                 self.target_size_combo.setCurrentText("35%")  # 设置初始值为x%,即长宽均为原来的x%且取整
                 self.t_input.setText("100000")  # 默认值为100000
-                self.p_input.setText("40")  # 默认值为70
+                self.p_input.setText("70")  # 默认值为70
+                self.d_input.setText("50")  # 默认值为50
+            elif "yalefaces" in self.dataset_path:
+                self.train_test_split_label.setVisible(True)
+                self.train_test_split_combo.setVisible(True)
+                self.target_size_label.setVisible(True)
+                self.target_size_combo.setVisible(True)
+                self.mnist_split_label.setVisible(False)
+                self.mnist_split_combo.setVisible(False)
+                self.target_size_combo.setCurrentText("10%")  # 设置初始值为x%,即长宽均为原来的x%且取整
+                self.train_test_split_combo.setCurrentText("0.50")
+                self.t_input.setText("100000")  # 默认值为100000
+                self.p_input.setText("70")  # 默认值为70
+                self.d_input.setText("50")  # 默认值为50
+            elif "CroppedYaleB" in self.dataset_path:
+                self.train_test_split_label.setVisible(True)
+                self.train_test_split_combo.setVisible(True)
+                self.target_size_label.setVisible(True)
+                self.target_size_combo.setVisible(True)
+                self.mnist_split_label.setVisible(False)
+                self.mnist_split_combo.setVisible(False)
+                self.target_size_combo.setCurrentText("5%")
+                self.train_test_split_combo.setCurrentText("0.05")
+                self.t_input.setText("100000")  # 默认值为100000
+                self.p_input.setText("70")  # 默认值为70
+                self.d_input.setText("50")  # 默认值为50
             self.recommended_k_parameters()
         except Exception as e:
             # 弹出错误窗口显示报错原因
@@ -241,11 +246,11 @@ class Window(QMainWindow):
         selected_dataset = self.dataset_path
 
         #如果读取的是ORL数据集或者是UMIST数据集，即self.dataset_path中含有"ORL"字符串或者"UMIST"字符串
-        if "ORL" in self.dataset_path or "yalefaces" in self.dataset_path:
+        if "ORL" in self.dataset_path or "yalefaces"  or "CroppedYaleB" in self.dataset_path:
             data, labels, imageshape = read_ORL_UMIST_yalefaces_images(self.dataset_path, target_size=None)
             train_test_split_ratio = float(self.train_test_split_combo.currentText())
-            #train_data, train_labels, test_data, test_labels = my_train_test_split(data, labels, train_test_split_ratio=train_test_split_ratio)
-            train_data, train_labels, test_data, test_labels = split(data, labels, train_test_split_ratio, 0)
+            train_data, train_labels, test_data, test_labels = my_train_test_split(data, labels, train_test_split_ratio=train_test_split_ratio)
+            #train_data, train_labels, test_data, test_labels = split(data, labels, train_test_split_ratio, 0)
         #如果读取的是MNIST数据集，即self.dataset_path中含有"MNIST"字符串
         elif "MNIST_ORG" in self.dataset_path:
             fraction = float(self.mnist_split_combo.currentText())
@@ -291,7 +296,7 @@ class Window(QMainWindow):
             #classifier = self.classifier_combo.currentText()
 
             #如果读取的是ORL数据集或者是UMIST数据集，即self.dataset_path中含有"ORL"字符串或者"UMIST"字符串
-            if "ORL" in self.dataset_path or "yalefaces" in self.dataset_path:
+            if "ORL" in self.dataset_path or "yalefaces" or "CroppedYaleB" in self.dataset_path:
                 data_temp, labels_temp, image_shape_temp = read_ORL_UMIST_yalefaces_images(self.dataset_path, target_size=None)
                 train_test_split_ratio = float(self.train_test_split_combo.currentText())
             #如果读取的是MNIST数据集，即self.dataset_path中含有"MNIST"字符串
@@ -331,7 +336,7 @@ class Window(QMainWindow):
                 rates = []  # 用于存储runs次运行的准确率
                 deviations = []  # 用于存储runs次运行的标准差 
                 for i in range(runs):
-                    if "ORL" in self.dataset_path or "UMIST" in self.dataset_path or "yalefaces" or "FERET_Face" in self.dataset_path:
+                    if "ORL" in self.dataset_path or "UMIST" in self.dataset_path or "yalefaces" or "CroppedYaleB" or "FERET_Face" in self.dataset_path:
                         images, labels, image_shape = read_ORL_UMIST_yalefaces_images(self.dataset_path, target_size=target_size)
                         if method == "PCA":
                             data = PCA(images.T, d)
@@ -390,6 +395,33 @@ class Window(QMainWindow):
                     elif method == "LPP":
                         # 调用 LPP 函数并接收返回的中间变量信息
                         eigenvectors = LPP(train_data, d, lpp_method, k, t)
+                        weight_matrix = eigenvectors.T @ train_data.T
+                        test_data = eigenvectors.T @ test_data.T
+                        # 将最后一次运行的信息显示在文本编辑框中
+                        if i == runs - 1:
+                            # 将信息显示在文本编辑框中
+                            self.info_textedit.clear()
+                            self.show_info("读取的图像形状:", image_shape)
+                            self.show_info("训练数据集形状:", train_data.shape)
+                            self.show_info("特征图像形状:", eigenvectors.shape)
+                            self.show_info("权重矩阵形状:", weight_matrix.shape)
+                        # 识别率统计
+                        wrong_times = 0
+                        right_times = 0
+                        for i in range(test_data.shape[0]):
+                            #if classifier == "K-Nearest Neighbor":
+                                #flag = KNN_classifier(i, train_labels, test_labels, test_data[:,i], weight_matrix, k)
+                            #else:
+                            flag = Nearest_classifier(i, train_labels, test_labels, test_data[:,i], weight_matrix)
+                            if flag:
+                                right_times += 1
+                            else:
+                                wrong_times += 1
+                        rate = right_times / test_data.shape[0]
+
+                    elif method == "FLPP":
+                    # 调用 FLPP 函数并接收返回的中间变量信息
+                        eigenvectors = FLPP(train_data, d)
                         weight_matrix = eigenvectors.T @ train_data.T
                         test_data = eigenvectors.T @ test_data.T
                         # 将最后一次运行的信息显示在文本编辑框中
@@ -526,8 +558,8 @@ class Window(QMainWindow):
             self.p_input.setVisible(False)
             self.lpp_method_label.setVisible(False)
             self.lpp_method_combo.setVisible(False)
-            self.classifier_label.setVisible(False)
-            self.classifier_combo.setVisible(False)
+            #self.classifier_label.setVisible(False)
+            #self.classifier_combo.setVisible(False)
         elif selected_method == "LPP": 
             if selected_lpp_method == "Adaptive epsilon":
                 self.k_label.setVisible(False)
@@ -536,8 +568,8 @@ class Window(QMainWindow):
             else:
                 self.k_label.setVisible(True)
                 self.k_input.setVisible(True)
-                self.classifier_label.setVisible(False)
-                self.classifier_combo.setVisible(True)
+                #self.classifier_label.setVisible(False)
+                #self.classifier_combo.setVisible(True)
             self.t_label.setVisible(True)
             self.t_input.setVisible(True)
             self.p_label.setVisible(True)
@@ -548,12 +580,12 @@ class Window(QMainWindow):
             if selected_lpp_method == "Adaptive epsilon":
                 self.k_label.setVisible(False)
                 self.k_input.setVisible(False)
-                self.classifier_label.setVisible(False)
-                self.classifier_combo.setVisible(False)
+                #self.classifier_label.setVisible(False)
+                #self.classifier_combo.setVisible(False)
             else:
                 self.k_label.setVisible(True)
                 self.k_input.setVisible(True)
-                self.classifier_combo.setVisible(True)
+                #self.classifier_combo.setVisible(True)
             self.t_label.setVisible(True)
             self.t_input.setVisible(True)
             self.p_label.setVisible(True)
@@ -569,8 +601,21 @@ class Window(QMainWindow):
             self.p_input.setVisible(False)
             self.lpp_method_label.setVisible(False)
             self.lpp_method_combo.setVisible(False)
-            self.classifier_combo.setVisible(False)
-            self.classifier_combo.setCurrentText("Nearest Neighbor")
+            #self.classifier_combo.setVisible(False)
+            #self.classifier_combo.setCurrentText("Nearest Neighbor")
+        elif selected_method == "FLPP":
+            self.k_label.setVisible(False)
+            self.k_input.setVisible(False)
+            self.t_label.setVisible(False)
+            self.t_input.setVisible(False)
+            self.p_label.setVisible(True)
+            self.p_input.setVisible(True)
+            self.d_label.setVisible(True)
+            self.d_input.setVisible(True)
+            self.lpp_method_label.setVisible(False)
+            self.lpp_method_combo.setVisible(False)
+            #self.classifier_label.setVisible(False)
+            #self.classifier_combo.setVisible(False)
 
 if __name__ == "__main__":
     app = QApplication(argv)

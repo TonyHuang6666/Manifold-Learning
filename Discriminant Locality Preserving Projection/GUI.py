@@ -140,7 +140,7 @@ class Window(QMainWindow):
         #self.main_layout.addWidget(self.canvas)
 
         # 初始/默认数据集路径变量
-        if "ORL" in self.default_dataset_path or "yalefaces" or "CroppedYaleB" in self.default_dataset_path:
+        if "ORL" in self.default_dataset_path in self.default_dataset_path:
             self.dataset_path = self.default_dataset_path
             self.recommended_k_parameters()
             self.mnist_split_label.setVisible(False)
@@ -149,40 +149,6 @@ class Window(QMainWindow):
             self.t_input.setText("100000")  # 默认值为100000
             self.p_input.setText("70")  # 默认值为100
             self.d_input.setText("50")  # 默认值为70
-        elif "MNIST_ORG" in self.default_dataset_path:
-            self.dataset_path = self.default_dataset_path
-            self.recommended_k_parameters()
-            self.train_test_split_label.setVisible(False)
-            self.train_test_split_combo.setVisible(False)
-            self.target_size_label.setVisible(False)
-            self.target_size_combo.setVisible(False)
-            self.mnist_split_label.setVisible(True)
-            self.mnist_split_combo.setVisible(True)
-            self.t_input.setText("1500")
-            self.p_input.setText("70")
-            self.d_input.setText("50")
-        elif "mini" in self.default_dataset_path:
-            self.dataset_path = self.default_dataset_path
-            self.recommended_k_parameters()
-            self.mnist_split_label.setVisible(False)
-            self.mnist_split_combo.setVisible(False)
-            self.target_size_label.setVisible(False)
-            self.target_size_combo.setVisible(False)
-            self.train_test_split_label.setVisible(True)
-            self.train_test_split_combo.setVisible(True)
-            self.t_input.setText("100000")
-            self.p_input.setText("30")
-            self.d_input.setText("20")
-        elif "FERET_Face" in self.default_dataset_path:
-            self.dataset_path = self.default_dataset_path
-            self.recommended_k_parameters()
-            self.mnist_split_label.setVisible(False)
-            self.mnist_split_combo.setVisible(False)
-            self.target_size_combo.setCurrentText("35%")  # 设置初始值为x%,即长宽均为原来的x%且取整
-            self.t_input.setText("100000")  # 默认值为100000
-            self.p_input.setText("70")  # 默认值为100
-            self.d_input.setText("50")  # 默认值为70
-
 
     def center_on_screen(self):
         # 获取屏幕尺寸和窗口尺寸
@@ -203,7 +169,7 @@ class Window(QMainWindow):
             self.dataset_path = QFileDialog.getExistingDirectory(self, "选择数据集文件夹", options=options)
             if self.dataset_path:
                 self.dataset_path_label.setText(f"数据集路径: {self.dataset_path}")
-            if "ORL" in self.dataset_path or "yalefaces"  or "CroppedYaleB" in self.dataset_path:
+            if "ORL" in self.dataset_path in self.dataset_path:
                 self.train_test_split_label.setVisible(True)
                 self.train_test_split_combo.setVisible(True)
                 self.target_size_label.setVisible(True)
@@ -211,6 +177,7 @@ class Window(QMainWindow):
                 self.mnist_split_label.setVisible(False)
                 self.mnist_split_combo.setVisible(False)
                 self.target_size_combo.setCurrentText("35%")  # 设置初始值为x%,即长宽均为原来的x%且取整
+                self.train_test_split_combo.setCurrentText("0.50")
                 self.t_input.setText("100000")  # 默认值为100000
                 self.p_input.setText("70")  # 默认值为70
                 self.d_input.setText("50")  # 默认值为50
@@ -242,6 +209,30 @@ class Window(QMainWindow):
                 self.mnist_split_label.setVisible(False)
                 self.mnist_split_combo.setVisible(False)
                 self.target_size_combo.setCurrentText("35%")  # 设置初始值为x%,即长宽均为原来的x%且取整
+                self.t_input.setText("100000")  # 默认值为100000
+                self.p_input.setText("70")  # 默认值为70
+                self.d_input.setText("50")  # 默认值为50
+            elif "yalefaces" in self.dataset_path:
+                self.train_test_split_label.setVisible(True)
+                self.train_test_split_combo.setVisible(True)
+                self.target_size_label.setVisible(True)
+                self.target_size_combo.setVisible(True)
+                self.mnist_split_label.setVisible(False)
+                self.mnist_split_combo.setVisible(False)
+                self.target_size_combo.setCurrentText("10%")  # 设置初始值为x%,即长宽均为原来的x%且取整
+                self.train_test_split_combo.setCurrentText("0.50")
+                self.t_input.setText("100000")  # 默认值为100000
+                self.p_input.setText("70")  # 默认值为70
+                self.d_input.setText("50")  # 默认值为50
+            elif "CroppedYaleB" in self.dataset_path:
+                self.train_test_split_label.setVisible(True)
+                self.train_test_split_combo.setVisible(True)
+                self.target_size_label.setVisible(True)
+                self.target_size_combo.setVisible(True)
+                self.mnist_split_label.setVisible(False)
+                self.mnist_split_combo.setVisible(False)
+                self.target_size_combo.setCurrentText("5%")
+                self.train_test_split_combo.setCurrentText("0.05")
                 self.t_input.setText("100000")  # 默认值为100000
                 self.p_input.setText("70")  # 默认值为70
                 self.d_input.setText("50")  # 默认值为50
@@ -343,7 +334,7 @@ class Window(QMainWindow):
             QApplication.processEvents()  # 强制刷新界面，立即显示按钮文本变更
             random_sums = [98, 73, 76, 39, 99, 51, 48, 18, 27, 78, 74, 19, 50, 89, 67, 64, 34, 58, 8, 2, 75, 13, 70, 25, 9, 72, 6, 30, 14, 45, 11, 63, 59, 46, 91, 71, 42, 24, 83, 28, 38, 53, 41, 7, 40, 82, 36, 84, 37, 85, 55, 56, 100, 80, 44, 92, 43, 10, 97, 47, 35, 29, 26, 4, 3, 17, 88, 61, 21, 66, 65, 62, 57, 54, 49, 31, 81, 15, 16, 1, 32, 5, 79, 22, 95, 87, 68, 96, 93, 86, 60, 94, 52, 69, 23, 20, 77, 90, 33, 12]
             for i in range(runs):
-                if "ORL" in self.dataset_path or "UMIST" in self.dataset_path or "yalefaces" or "FERET_Face" in self.dataset_path:
+                if "ORL" in self.dataset_path or "UMIST" in self.dataset_path or "yalefaces" or "CroppedYaleB" or"FERET_Face" in self.dataset_path:
                     images, labels, image_shape = read_ORL_UMIST_yalefaces_images(self.dataset_path, target_size=target_size)
                     if method == "PCA":
                         data = PCA(images.T, d)
