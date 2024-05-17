@@ -84,7 +84,7 @@ class Window(QMainWindow):
         self.lpp_method_combo.addItem("KNN")
         #self.lpp_method_combo.addItem("Average-KNN-distances-based epsilon")
         self.lpp_method_combo.addItem("KNN + Adaptive epsilon")
-        #self.lpp_method_combo.addItem("Adaptive epsilon")
+        self.lpp_method_combo.addItem("Adaptive epsilon")
         self.lpp_method_combo.setCurrentText("KNN + Adaptive epsilon")  # 设置初始值为当前选择
         self.lpp_method_combo.currentIndexChanged.connect(self.toggle_parameters_visibility)  # 连接方法选择框的信号与槽函数
         self.main_layout.addWidget(self.lpp_method_combo)
@@ -570,7 +570,7 @@ class Window(QMainWindow):
             if selected_lpp_method == "Adaptive epsilon":
                 self.k_label.setVisible(False)
                 self.k_input.setVisible(False)
-                self.classifier_combo.setVisible(False)
+                #self.classifier_combo.setVisible(False)
             else:
                 self.k_label.setVisible(True)
                 self.k_input.setVisible(True)
