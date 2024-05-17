@@ -3,7 +3,7 @@ from sys import argv, exit
 from matplotlib import pyplot as plt
 from PyQt5.QtWidgets import QApplication, QMainWindow, QLabel, QVBoxLayout, QWidget, QPushButton, QFileDialog, QLineEdit, QComboBox, QTextEdit, QMessageBox, QDesktopWidget
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
-from Algorithms import *
+from Algorithms_d import *
 import warnings
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
@@ -67,7 +67,7 @@ class Window(QMainWindow):
         self.method_combo.addItem("LPP")
         self.method_combo.addItem("MLDA")
         self.method_combo.addItem("PCA")
-        self.method_combo.setCurrentText("DLPP")  # 设置初始值为当前选择
+        self.method_combo.setCurrentText("LPP")  # 设置初始值为当前选择
         self.method_combo.currentIndexChanged.connect(self.toggle_parameters_visibility)  # 连接方法选择框的信号与槽函数
         self.main_layout.addWidget(self.method_combo)
 
@@ -85,7 +85,7 @@ class Window(QMainWindow):
         #self.lpp_method_combo.addItem("Average-KNN-distances-based epsilon")
         self.lpp_method_combo.addItem("KNN + Adaptive epsilon")
         #self.lpp_method_combo.addItem("Adaptive epsilon")
-        self.lpp_method_combo.setCurrentText("KNN")  # 设置初始值为当前选择
+        self.lpp_method_combo.setCurrentText("KNN + Adaptive epsilon")  # 设置初始值为当前选择
         self.lpp_method_combo.currentIndexChanged.connect(self.toggle_parameters_visibility)  # 连接方法选择框的信号与槽函数
         self.main_layout.addWidget(self.lpp_method_combo)
 
@@ -233,8 +233,8 @@ class Window(QMainWindow):
                 self.target_size_combo.setCurrentText("5%")
                 self.train_test_split_combo.setCurrentText("0.05")
                 self.t_input.setText("100000")  # 默认值为100000
-                self.p_input.setText("70")  # 默认值为70
-                self.d_input.setText("50")  # 默认值为50
+                self.p_input.setText("41")  # 默认值为41
+                self.d_input.setText("38")  # 默认值为38
             self.recommended_k_parameters()
         except Exception as e:
             # 弹出错误窗口显示报错原因
@@ -286,7 +286,7 @@ class Window(QMainWindow):
         try:
             # 获取用户输入的参数值
             p = int(self.p_input.text())
-            #d = int(self.d_input.text())
+            d = int(self.d_input.text())
             k = int(self.k_input.text())
             t = int(self.t_input.text())
             method = self.method_combo.currentText()
@@ -330,12 +330,16 @@ class Window(QMainWindow):
             self.execute_button.setText("程序执行中，请勿操作！")
             QApplication.processEvents()  # 强制刷新界面，立即显示按钮文本变更
             random_sums = [98, 73, 76, 39, 99, 51, 48, 18, 27, 78, 74, 19, 50, 89, 67, 64, 34, 58, 8, 2, 75, 13, 70, 25, 9, 72, 6, 30, 14, 45, 11, 63, 59, 46, 91, 71, 42, 24, 83, 28, 38, 53, 41, 7, 40, 82, 36, 84, 37, 85, 55, 56, 100, 80, 44, 92, 43, 10, 97, 47, 35, 29, 26, 4, 3, 17, 88, 61, 21, 66, 65, 62, 57, 54, 49, 31, 81, 15, 16, 1, 32, 5, 79, 22, 95, 87, 68, 96, 93, 86, 60, 94, 52, 69, 23, 20, 77, 90, 33, 12]
-            accuracies = []  # 用于存储1到p-1维的运行的准确率
-            std_deviations = []  # 用于存储1到p-1维的运行的标准差
-            for d in range(1, p):  # 从1到p
+            accuracies = []  # 用于存储准确率
+            std_deviations = []  # 用于存储标准差
+            thresholds = [] # 用于存储导函数值阈值
+            # 从0.1开始，每次增加0.1，直到2.0
+            for threshold in range(1, 41):
+                threshold = threshold * 0.05
                 rates = []  # 用于存储runs次运行的准确率
                 deviations = []  # 用于存储runs次运行的标准差 
                 for i in range(runs):
+                    
                     if "ORL" in self.dataset_path or "UMIST" in self.dataset_path or "yalefaces" or "CroppedYaleB" or "FERET_Face" in self.dataset_path:
                         images, labels, image_shape = read_ORL_UMIST_yalefaces_images(self.dataset_path, target_size=target_size)
                         if method == "PCA":
@@ -394,7 +398,8 @@ class Window(QMainWindow):
 
                     elif method == "LPP":
                         # 调用 LPP 函数并接收返回的中间变量信息
-                        eigenvectors = LPP(train_data, d, lpp_method, k, t)
+                        
+                        eigenvectors = LPP(train_data, d, lpp_method, k, t, threshold)
                         weight_matrix = eigenvectors.T @ train_data.T
                         test_data = eigenvectors.T @ test_data.T
                         # 将最后一次运行的信息显示在文本编辑框中
@@ -495,10 +500,11 @@ class Window(QMainWindow):
                 deviations.append(np.std(rates))  # 记录标准差
                 accuracies.append(average_accuracy)
                 std_deviations.append(np.std(rates))
+                thresholds.append(threshold)
                 #print(f"最近邻数k={k}的平均准确率: {average_accuracy}, 标准差: {np.std(rates)}")
-                print(f"维度d={d}的平均准确率: {average_accuracy}, 标准差: {np.std(rates)}")
+                print(f"导函数值阈值threshold={threshold}的平均准确率: {average_accuracy}, 标准差: {np.std(rates)}")
             #保存d和对应的平均准确率到csv文件中，第一列数据为d，第二列数据为平均准确率，文件名为method+p.csv
-            np.savetxt(f"{method}{d}{lpp_method}.csv", np.array([range(1, p), accuracies, std_deviations]).T, delimiter=",", fmt="%.4f", header="d,accuracy,std_deviation", comments="")
+            np.savetxt(f"{method}{threshold}{lpp_method}.csv", np.array([thresholds, accuracies, std_deviations]).T, delimiter=",", fmt="%.4f", header="threshold,accuracy,std_deviation", comments="")
                 # 计算标准差
                 #std_deviation = np.std(accuracies)
 
