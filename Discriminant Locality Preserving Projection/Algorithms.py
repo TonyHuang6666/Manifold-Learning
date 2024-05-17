@@ -10,19 +10,33 @@ from sklearn.model_selection import train_test_split
 from PIL import Image
 
 ###############################PCA算法函数######################################
-# PCA实现函数
-def PCA(X, d):
+def PCA(X, d, threshold=1e-3):
     # 计算数据矩阵的均值
     mean = np.mean(X, axis=0)
     # 中心化数据矩阵
     X_centered = X - mean
     # 计算数据矩阵的协方差矩阵
     covariance_matrix = np.cov(X_centered, rowvar=False)
+    # 计算协方差矩阵的特征值和特征向量
     eigenvalues, eigenvectors = eigs(covariance_matrix, k=d+1)
-    sorted_indices = np.argsort(eigenvalues.real)
-    selected_indices = sorted_indices[1:d + 1]
-    selected_eigenvectors = eigenvectors.real[:, selected_indices]
-    return selected_eigenvectors    
+    # 取实部
+    eigenvalues = eigenvalues.real
+    eigenvectors = eigenvectors.real
+    # 筛选特征值大于阈值的特征向量
+    valid_indices = np.where(eigenvalues > threshold)[0]
+    # 按特征值从大到小排序
+    sorted_indices = np.argsort(eigenvalues[valid_indices])[::-1]
+    # 选择前d个特征值对应的特征向量
+    selected_indices = valid_indices[sorted_indices[:d]]
+    selected_eigenvectors = eigenvectors[:, selected_indices]
+    return selected_eigenvectors
+
+# 调用库函数的PCA
+from sklearn.decomposition import PCA
+def PCA_sklearn(X, d):
+    pca = PCA(n_components=d)
+    pca.fit(X)
+    return pca.components_.T
 
 ###############################LPP算法函数######################################
 #####################计算自适应epsilon graph####################

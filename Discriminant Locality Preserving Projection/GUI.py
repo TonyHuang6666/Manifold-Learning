@@ -67,6 +67,7 @@ class Window(QMainWindow):
         self.method_combo.addItem("LPP")
         self.method_combo.addItem("MLDA")
         self.method_combo.addItem("PCA")
+        self.method_combo.addItem("PCA_sklearn")
         self.method_combo.setCurrentText("DLPP")  # 设置初始值为当前选择
         self.method_combo.currentIndexChanged.connect(self.toggle_parameters_visibility)  # 连接方法选择框的信号与槽函数
         self.main_layout.addWidget(self.method_combo)
@@ -479,6 +480,26 @@ class Window(QMainWindow):
                         self.info_textedit.clear()
                         self.show_info("读取的图像形状:", image_shape)
                         self.show_info("训练数据集形状:", train_data.T.shape)
+                    # 识别率统计
+                    wrong_times = 0
+                    right_times = 0
+                    for i in range(test_data.shape[0]):
+                        flag = Nearest_classifier(i, train_labels, test_labels, test_data[i], train_data.T)
+                        if flag:
+                            right_times += 1
+                        else:
+                            wrong_times += 1
+                    rate = right_times / test_data.shape[0]
+
+                elif method == "PCA_sklearn":
+                    # 调用 PCA 函数
+                    pca = PCA_sklearn(images, d)
+                    # 将最后一次运行的信息显示在文本编辑框中
+                    if i == runs - 1:
+                        # 将信息显示在文本编辑框中
+                        self.info_textedit.clear()
+                        self.show_info("读取的图像形状:", image_shape)
+                        self.show_info("训练数据集形状:", images.shape)
                     # 识别率统计
                     wrong_times = 0
                     right_times = 0
